@@ -20,7 +20,7 @@ Installation
 
 	> cd /srv
 
-	> sudo git clone git@gitlab.smo:automation/xmlrpc.git
+	> sudo git clone https://github.com/flavio70/xmlrpc.git
 
 
 Configuration
