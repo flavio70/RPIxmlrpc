@@ -151,3 +151,28 @@ class rpiDB(object):
                         logger.error('DBClass.update_event\n%s'%str(inst))
                         return False
                         conn.close()
+
+
+
+
+
+
+	def delete_event(self,ev_id):
+                try:
+                        conn=self._connect()
+                        cursor=conn.cursor()
+                        querystr="DELETE FROM `T_POWER_SCHEDULE` where `idT_POWER_SCHEDULE`="+str(ev_id)
+                        cursor.execute(querystr)
+                        conn.commit()
+                        conn.close()
+                        logger.info('event %i has been removed from DB.'%ev_id)
+                        return True
+
+
+                except Exception as inst:
+                        logger.error('DBClass.delete_event\n%s'%str(inst))
+                        return False
+                        conn.close()
+
+
+

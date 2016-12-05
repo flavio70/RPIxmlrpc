@@ -266,9 +266,14 @@ while True:
                             GPIO.output(ev_pin, GPIO.HIGH)
                             #set pin status into DB
                             hostDB.set_pin_status(hostip,str(ev_pin),'0','Scheduled','Change Rack Power Status to ON')
+                            #delete event from DB
+                            hostDB.delete_event(ev_id)
                             #set pin mode to Auto? (no should be already done)
                             logger.info('Planned Event Start.pin %i set OFF because event %i\n'%(ev_pin,ev_id))
-                    else:logger.info('PIN %i already OFF. Skipping PIN management...'%ev_pin)
+                    else:
+                            logger.info('PIN %i already OFF. Skipping PIN management...'%ev_pin)
+                            if ev_interval == 0:#event not recurrent
+                                    hostDB.delete_event(ev_id)
 
 
 
