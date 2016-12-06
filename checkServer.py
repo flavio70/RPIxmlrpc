@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 import xmlrpc.client
 import time 
-s=xmlrpc.client.ServerProxy('http://151.98.64.32:8080')
+s=xmlrpc.client.ServerProxy('http://151.98.130.155:8080')
 print('checking server connection...')
 print('... %s Returned'%s.checkServer())
 
 aryon=[]
 aryoff=[]
-pinList = [2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15,17,18]
+pinList = [2, 3, 4, 5, 6, 7, 8, 9]
 
 for i in pinList:
 	aryon.append({'gpio':i,'status':'ON','modifier':'xtest'})
