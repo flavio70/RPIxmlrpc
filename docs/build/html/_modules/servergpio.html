@@ -1,0 +1,394 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>servergpio &#8212; Raspberry GPIO xmlrpc 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Raspberry GPIO xmlrpc 1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for servergpio</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="kn">from</span> <span class="nn">xmlrpc.server</span> <span class="k">import</span> <span class="n">SimpleXMLRPCServer</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">socket</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">from</span> <span class="nn">socketserver</span> <span class="k">import</span> <span class="n">ThreadingMixIn</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">fcntl</span>
+<span class="kn">import</span> <span class="nn">struct</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="k">import</span> <span class="n">datetime</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="k">import</span> <span class="n">timedelta</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">logging.config</span>
+<span class="kn">import</span> <span class="nn">RPi.GPIO</span> <span class="k">as</span> <span class="nn">GPIO</span>
+<span class="kn">from</span> <span class="nn">DBClass</span> <span class="k">import</span> <span class="n">rpiDB</span>
+
+<span class="c1">#polling time (sec.) used for event polling</span>
+
+<span class="n">POLLING_TIME</span><span class="o">=</span><span class="mi">60</span>
+
+<span class="n">BASE_DIR</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
+
+<span class="c1"># init DB instance for current host</span>
+
+<span class="n">hostDB</span><span class="o">=</span><span class="n">rpiDB</span><span class="p">()</span>
+
+
+<span class="c1"># init logging</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">fileConfig</span><span class="p">(</span><span class="n">BASE_DIR</span> <span class="o">+</span> <span class="s1">&#39;/logging.conf&#39;</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;xmlServer&#39;</span><span class="p">)</span>
+
+
+<span class="n">hostip</span><span class="o">=</span><span class="s1">&#39;&#39;</span>
+<span class="c1"># init list with pin numbers</span>
+<span class="n">pinList</span> <span class="o">=</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">17</span><span class="p">,</span> <span class="mi">18</span><span class="p">,</span> <span class="mi">19</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">21</span><span class="p">,</span> <span class="mi">22</span><span class="p">,</span> <span class="mi">23</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">26</span><span class="p">]</span>
+
+
+
+<span class="k">def</span> <span class="nf">get_interface_ip</span><span class="p">(</span><span class="n">ifname</span><span class="p">):</span>
+	<span class="n">s</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_DGRAM</span><span class="p">)</span>
+	<span class="k">return</span> <span class="n">socket</span><span class="o">.</span><span class="n">inet_ntoa</span><span class="p">(</span><span class="n">fcntl</span><span class="o">.</span><span class="n">ioctl</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">fileno</span><span class="p">(),</span> <span class="mh">0x8915</span><span class="p">,</span> <span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="s1">&#39;256s&#39;</span><span class="p">,</span> <span class="n">ifname</span><span class="p">[:</span><span class="mi">15</span><span class="p">]</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)))[</span><span class="mi">20</span><span class="p">:</span><span class="mi">24</span><span class="p">])</span>
+
+
+
+<span class="k">def</span> <span class="nf">get_lan_ip</span><span class="p">():</span>
+	<span class="n">ip</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">gethostbyname</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">gethostname</span><span class="p">())</span>
+	<span class="k">if</span> <span class="n">ip</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;127.&quot;</span><span class="p">):</span>
+		<span class="n">interfaces</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;eth0&quot;</span><span class="p">,</span><span class="s2">&quot;wlan0&quot;</span><span class="p">]</span>
+		<span class="k">for</span> <span class="n">ifname</span> <span class="ow">in</span> <span class="n">interfaces</span><span class="p">:</span>
+			<span class="k">try</span><span class="p">:</span>
+				<span class="n">ip</span> <span class="o">=</span> <span class="n">get_interface_ip</span><span class="p">(</span><span class="n">ifname</span><span class="p">)</span>
+				<span class="k">break</span>
+			<span class="k">except</span> <span class="ne">IOError</span><span class="p">:</span>
+				<span class="k">pass</span>
+	<span class="k">return</span> <span class="n">ip</span>
+
+
+<span class="k">def</span> <span class="nf">init_GPIO</span><span class="p">():</span>
+	<span class="c1"># settings for GPIOs</span>
+	<span class="k">global</span> <span class="n">pinList</span>
+	<span class="k">global</span> <span class="n">hostip</span>
+	<span class="k">global</span> <span class="n">hostDB</span>
+	<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Initializing GPIOs...&quot;</span><span class="p">)</span>
+	<span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Initializing GPIOs...&quot;</span><span class="p">)</span>
+	<span class="n">GPIO</span><span class="o">.</span><span class="n">setwarnings</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+	<span class="n">GPIO</span><span class="o">.</span><span class="n">setmode</span><span class="p">(</span><span class="n">GPIO</span><span class="o">.</span><span class="n">BCM</span><span class="p">)</span>
+
+
+	<span class="c1"># loop through pins and set mode to output and state</span>
+	<span class="c1"># according to value stored into DB</span>
+ 
+	<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">pinList</span><span class="p">:</span> 
+		<span class="n">GPIO</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">GPIO</span><span class="o">.</span><span class="n">OUT</span><span class="p">,</span> <span class="n">initial</span><span class="o">=</span><span class="n">GPIO</span><span class="o">.</span><span class="n">HIGH</span><span class="p">)</span>
+		<span class="n">statusDB</span><span class="o">=</span><span class="n">hostDB</span><span class="o">.</span><span class="n">get_pin_status</span><span class="p">(</span><span class="n">hostip</span><span class="p">,</span><span class="n">i</span><span class="p">)</span>
+
+		<span class="k">if</span> <span class="n">statusDB</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                        <span class="n">GPIO</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">GPIO</span><span class="o">.</span><span class="n">HIGH</span><span class="p">)</span>
+
+		<span class="k">if</span> <span class="n">statusDB</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">GPIO</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">GPIO</span><span class="o">.</span><span class="n">HIGH</span><span class="p">)</span>
+                        <span class="n">hostDB</span><span class="o">.</span><span class="n">set_pin_status</span><span class="p">(</span><span class="n">hostip</span><span class="p">,</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">),</span><span class="s1">&#39;0&#39;</span><span class="p">,</span><span class="s1">&#39;RPI&#39;</span><span class="p">,</span><span class="s1">&#39;Restore Rack Power status to ON after Power Management (RPI) REBOOT&#39;</span><span class="p">)</span>
+
+		<span class="k">if</span> <span class="n">statusDB</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+		        <span class="n">GPIO</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">GPIO</span><span class="o">.</span><span class="n">LOW</span><span class="p">)</span>
+		        <span class="n">hostDB</span><span class="o">.</span><span class="n">set_pin_status</span><span class="p">(</span><span class="n">hostip</span><span class="p">,</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">),</span><span class="s1">&#39;1&#39;</span><span class="p">,</span><span class="s1">&#39;RPI&#39;</span><span class="p">,</span><span class="s1">&#39;Restore Rack Power status to OFF after Power Management (RPI) REBOOT&#39;</span><span class="p">)</span>
+
+
+
+<span class="k">def</span> <span class="nf">check_GPIO_status</span><span class="p">(</span><span class="n">pin</span><span class="p">,</span><span class="n">status</span><span class="p">):</span>
+        <span class="c1">#check the status 1/0 of the selected pin</span>
+        <span class="n">r</span><span class="o">=</span><span class="n">GPIO</span><span class="o">.</span><span class="n">input</span><span class="p">(</span><span class="n">pin</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">r</span> <span class="o">==</span> <span class="n">status</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+
+
+
+<div class="viewcode-block" id="ServerFuncts"><a class="viewcode-back" href="../rpcAPI.html#servergpio.ServerFuncts">[docs]</a><span class="k">class</span> <span class="nc">ServerFuncts</span><span class="p">:</span> 
+
+        <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+                <span class="c1">#make all of the string functions availabel through</span>
+                <span class="c1">#string.func_name</span>
+                <span class="kn">import</span> <span class="nn">string</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">string</span> <span class="o">=</span> <span class="n">string</span>
+
+        <span class="k">def</span> <span class="nf">_listMethods</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+                <span class="c1">#implement this method so that system.listMethods</span>
+                <span class="c1">#knows to advertise the string methods</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;serving listMethods funct ...&#39;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="p">[</span><span class="s1">&#39;checkServer&#39;</span><span class="p">,</span><span class="s1">&#39;setGPIO&#39;</span><span class="p">]</span>
+
+<div class="viewcode-block" id="ServerFuncts.checkServer"><a class="viewcode-back" href="../rpcAPI.html#servergpio.ServerFuncts.checkServer">[docs]</a>        <span class="k">def</span> <span class="nf">checkServer</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+                <span class="sd">&#39;&#39;&#39; check XMLRPC server service status</span>
+<span class="sd"> </span>
+<span class="sd">                :returns: string</span>
+<span class="sd">                :rtype: json</span>
+
+
+<span class="sd">                &#39;&#39;&#39;</span>
+                <span class="k">global</span> <span class="n">hostip</span>		
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span> <span class="p">(</span><span class="s2">&quot;serving checkServer funct...XMLRPC Server from </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span><span class="n">hostip</span><span class="p">)</span>		
+                <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="s2">&quot;XMLRPC Server from </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span><span class="n">hostip</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="ServerFuncts.setGPIO"><a class="viewcode-back" href="../rpcAPI.html#servergpio.ServerFuncts.setGPIO">[docs]</a>        <span class="k">def</span> <span class="nf">setGPIO</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">gpio</span><span class="p">):</span>
+                <span class="sd">&#39;&#39;&#39;set GPIO pin to status value and update DB.</span>
+
+<span class="sd">                :param list gpio: list of Dictionary in the form: {&#39;gpio&#39;:pinid,status:&#39;ON|OFF&#39;,&#39;modifier&#39;:userid} </span>
+
+<span class="sd">                &gt;&gt;&gt; setGPIO([{&#39;gpio&#39;:5,&#39;status&#39;:&#39;ON&#39;,&#39;modifier&#39;:&#39;ippolf&#39;},{&#39;gpio&#39;:6,&#39;status&#39;:&#39;OFF&#39;,&#39;modifier&#39;:&#39;ippolf&#39;}])</span>
+<span class="sd">                &#39;&#39;&#39;</span>
+
+                <span class="k">global</span> <span class="n">hostip</span>
+                <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">gpio</span><span class="p">:</span>
+                    <span class="n">status</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+                    <span class="n">gpiopin</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="s1">&#39;gpio&#39;</span><span class="p">])</span>
+                    <span class="n">modifier</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="s1">&#39;modifier&#39;</span><span class="p">])</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="k">if</span>  <span class="n">status</span> <span class="o">==</span> <span class="s1">&#39;ON&#39;</span><span class="p">:</span>
+                            <span class="n">GPIO</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">gpiopin</span><span class="p">),</span> <span class="n">GPIO</span><span class="o">.</span><span class="n">LOW</span><span class="p">)</span>
+                            <span class="n">hostDB</span><span class="o">.</span><span class="n">set_pin_status</span><span class="p">(</span><span class="n">hostip</span><span class="p">,</span><span class="n">gpiopin</span><span class="p">,</span><span class="s1">&#39;1&#39;</span><span class="p">,</span><span class="n">modifier</span><span class="p">,</span><span class="s1">&#39;Change Rack Power Status to OFF&#39;</span><span class="p">)</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">GPIO</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">gpiopin</span><span class="p">),</span> <span class="n">GPIO</span><span class="o">.</span><span class="n">HIGH</span><span class="p">)</span>
+                            <span class="n">hostDB</span><span class="o">.</span><span class="n">set_pin_status</span><span class="p">(</span><span class="n">hostip</span><span class="p">,</span><span class="n">gpiopin</span><span class="p">,</span><span class="s1">&#39;0&#39;</span><span class="p">,</span><span class="n">modifier</span><span class="p">,</span><span class="s1">&#39;Change Rack Power status to ON&#39;</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="n">exception</span> <span class="k">as</span> <span class="n">inst</span><span class="p">:</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">inst</span><span class="p">))</span>
+                        
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span> <span class="p">(</span><span class="s2">&quot;serving setGPIO funct... Pin: </span><span class="si">%s</span><span class="s2"> , Status </span><span class="si">%s</span><span class="s2"> from user </span><span class="si">%s</span><span class="s2"> &quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">gpiopin</span><span class="p">,</span><span class="n">status</span><span class="p">,</span><span class="n">modifier</span><span class="p">)</span> <span class="p">)</span>
+                
+                <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">gpio</span><span class="p">)</span></div></div>
+
+
+
+
+<span class="k">class</span> <span class="nc">ThreadedSimpleXMLRPCServer</span><span class="p">(</span><span class="n">ThreadingMixIn</span><span class="p">,</span> <span class="n">SimpleXMLRPCServer</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; handle requests in a separate thread.&quot;&quot;&quot;</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+
+    <span class="n">hostip</span> <span class="o">=</span> <span class="n">get_lan_ip</span><span class="p">()</span>
+    <span class="c1">#server = SimpleXMLRPCServer((hostip, 8080))</span>
+    <span class="n">server</span> <span class="o">=</span> <span class="n">ThreadedSimpleXMLRPCServer</span><span class="p">((</span><span class="n">hostip</span><span class="p">,</span> <span class="mi">8080</span><span class="p">))</span>
+    <span class="n">server</span><span class="o">.</span><span class="n">register_function</span><span class="p">(</span><span class="nb">pow</span><span class="p">)</span>
+    <span class="n">server</span><span class="o">.</span><span class="n">register_introspection_functions</span><span class="p">()</span>
+    <span class="n">server</span><span class="o">.</span><span class="n">register_instance</span><span class="p">(</span><span class="n">ServerFuncts</span><span class="p">(),</span> <span class="n">allow_dotted_names</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">server</span><span class="o">.</span><span class="n">register_multicall_functions</span><span class="p">()</span>
+
+    <span class="n">init_GPIO</span><span class="p">()</span>
+
+
+    <span class="n">serverThread</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span> <span class="o">=</span> <span class="n">server</span><span class="o">.</span><span class="n">serve_forever</span><span class="p">)</span>
+    <span class="n">serverThread</span><span class="o">.</span><span class="n">daemon</span> <span class="o">=</span> <span class="kc">True</span>
+
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">serverThread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">inst</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">inst</span><span class="p">))</span>
+
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Serving XML-RPC requests  on </span><span class="si">%s</span><span class="s1">  port 8080...&#39;</span> <span class="o">%</span><span class="n">hostip</span><span class="p">)</span>
+
+
+
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;################## Start new event polling cycle...#####################</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+    
+
+        <span class="c1">#getting event list </span>
+        <span class="n">evl</span><span class="o">=</span><span class="n">hostDB</span><span class="o">.</span><span class="n">get_events</span><span class="p">(</span><span class="n">hostip</span><span class="p">)</span>
+
+        <span class="c1">#managing found events</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;managing Found events...</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">ev</span> <span class="ow">in</span> <span class="n">evl</span><span class="p">:</span>
+            <span class="n">ev_id</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">ev</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">])</span>
+            <span class="n">ev_pin</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">ev</span><span class="p">[</span><span class="s1">&#39;pin&#39;</span><span class="p">])</span>
+            <span class="n">ev_interval</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">ev</span><span class="p">[</span><span class="s1">&#39;interval&#39;</span><span class="p">])</span>
+            <span class="n">now</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+            <span class="n">to_be_served</span><span class="o">=</span> <span class="kc">False</span>
+            <span class="n">set_pin_on</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">set_pin_off</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">start_str</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1">&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">ev</span><span class="p">[</span><span class="s1">&#39;start_time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">year</span><span class="p">,</span><span class="n">ev</span><span class="p">[</span><span class="s1">&#39;start_time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">month</span><span class="p">,</span><span class="n">ev</span><span class="p">[</span><span class="s1">&#39;start_time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">day</span><span class="p">,</span><span class="n">ev</span><span class="p">[</span><span class="s1">&#39;start_time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">hour</span><span class="p">,</span><span class="n">ev</span><span class="p">[</span><span class="s1">&#39;start_time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">minute</span><span class="p">)</span>
+            <span class="n">stop_str</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1">&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">ev</span><span class="p">[</span><span class="s1">&#39;stop_time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">year</span><span class="p">,</span><span class="n">ev</span><span class="p">[</span><span class="s1">&#39;stop_time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">month</span><span class="p">,</span><span class="n">ev</span><span class="p">[</span><span class="s1">&#39;stop_time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">day</span><span class="p">,</span><span class="n">ev</span><span class="p">[</span><span class="s1">&#39;stop_time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">hour</span><span class="p">,</span><span class="n">ev</span><span class="p">[</span><span class="s1">&#39;stop_time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">minute</span><span class="p">)</span>
+            <span class="n">start_time</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">start_str</span><span class="p">,</span><span class="s1">&#39;%Y %m </span><span class="si">%d</span><span class="s1"> %H %M&#39;</span><span class="p">)</span>
+            <span class="n">stop_time</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">stop_str</span><span class="p">,</span><span class="s1">&#39;%Y %m </span><span class="si">%d</span><span class="s1"> %H %M&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Found Event id </span><span class="si">%i</span><span class="s1"> for pin </span><span class="si">%i</span><span class="s1">.</span><span class="se">\n</span><span class="s1"> StartTime: </span><span class="si">%s</span><span class="s1"> StopTime </span><span class="si">%s</span><span class="s1">&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">ev_id</span><span class="p">,</span><span class="n">ev_pin</span><span class="p">,</span><span class="n">start_time</span><span class="p">,</span><span class="n">stop_time</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="n">now</span> <span class="o">&gt;=</span> <span class="n">start_time</span><span class="p">:</span>
+                    <span class="c1">#in this case we have to update the event start time in the DB</span>
+                    <span class="c1">#start_time+interval</span>
+                    <span class="n">to_be_served</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;current Time </span><span class="si">%s</span><span class="s1"> &gt;= event startTime </span><span class="si">%s</span><span class="s1">&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">now</span><span class="p">,</span><span class="n">start_time</span><span class="p">))</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Updating DB event StartTime...&#39;</span><span class="p">)</span>
+                    <span class="n">start_time</span><span class="o">=</span><span class="n">start_time</span><span class="o">+</span><span class="n">timedelta</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="n">ev_interval</span><span class="p">)</span>
+                    <span class="n">hostDB</span><span class="o">.</span><span class="n">update_event</span><span class="p">(</span><span class="n">ev_id</span><span class="p">,</span><span class="n">start_time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S&#39;</span><span class="p">),</span><span class="n">stop_time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S&#39;</span><span class="p">))</span>
+                    <span class="c1">#now check if pin has been set in manual mode</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Checking pin </span><span class="si">%i</span><span class="s1"> status...&#39;</span><span class="o">%</span><span class="n">ev_pin</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">hostDB</span><span class="o">.</span><span class="n">check_pin_mode</span><span class="p">(</span><span class="n">hostip</span><span class="p">,</span><span class="n">ev_pin</span><span class="p">):</span>
+                            <span class="c1">#pin set in auto mode</span>
+                            <span class="c1">#we should set the pin ON</span>
+                            <span class="n">set_pin_on</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="k">else</span><span class="p">:</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;PIN </span><span class="si">%i</span><span class="s1"> set in manual Mode. Skipping PIN management...&#39;</span><span class="o">%</span><span class="n">ev_pin</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">now</span> <span class="o">&gt;=</span> <span class="n">stop_time</span><span class="p">:</span>
+                    <span class="c1">#in this case we have to update the event stop time in the DB</span>
+                    <span class="c1">#stop_time+interval</span>
+                    <span class="n">to_be_served</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;current Time </span><span class="si">%s</span><span class="s1"> &gt;= event stopTime </span><span class="si">%s</span><span class="s1">&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">now</span><span class="p">,</span><span class="n">start_time</span><span class="p">))</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Updating DB event StopTime...&#39;</span><span class="p">)</span>
+                    <span class="n">stop_time</span><span class="o">=</span><span class="n">stop_time</span><span class="o">+</span><span class="n">timedelta</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="n">ev_interval</span><span class="p">)</span>
+                    <span class="n">hostDB</span><span class="o">.</span><span class="n">update_event</span><span class="p">(</span><span class="n">ev_id</span><span class="p">,</span><span class="n">start_time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S&#39;</span><span class="p">),</span><span class="n">stop_time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S&#39;</span><span class="p">))</span>
+                    <span class="c1">#now check if pin has been set in manual mode</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Checking pin </span><span class="si">%i</span><span class="s1"> status...&#39;</span><span class="o">%</span><span class="n">ev_pin</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">hostDB</span><span class="o">.</span><span class="n">check_pin_mode</span><span class="p">(</span><span class="n">hostip</span><span class="p">,</span><span class="n">ev_pin</span><span class="p">):</span>
+                            <span class="c1">#pin set in auto mode</span>
+                            <span class="c1">#we should set the pin OFF </span>
+                            <span class="n">set_pin_off</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="k">else</span><span class="p">:</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;PIN </span><span class="si">%i</span><span class="s1"> set in manual Mode. Skipping PIN management...&#39;</span><span class="o">%</span><span class="n">ev_pin</span><span class="p">)</span>
+
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">set_pin_on</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">set_pin_off</span><span class="p">):</span>
+                    <span class="c1">#We have to set the pin ON (just if is OFF)</span>
+                    <span class="c1">#we are at the begin of a scheduled event</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">check_GPIO_status</span><span class="p">(</span><span class="n">ev_pin</span><span class="p">,</span> <span class="n">GPIO</span><span class="o">.</span><span class="n">LOW</span><span class="p">):</span>
+                            <span class="c1">#pin is OFF</span>
+                            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Pin </span><span class="si">%i</span><span class="s1"> is OFF. Setting to ON..&#39;</span><span class="o">%</span><span class="n">ev_pin</span><span class="p">)</span>
+                            <span class="n">GPIO</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">ev_pin</span><span class="p">,</span> <span class="n">GPIO</span><span class="o">.</span><span class="n">LOW</span><span class="p">)</span>
+                            <span class="c1">#set pin status into DB</span>
+                            <span class="n">hostDB</span><span class="o">.</span><span class="n">set_pin_status</span><span class="p">(</span><span class="n">hostip</span><span class="p">,</span><span class="nb">str</span><span class="p">(</span><span class="n">ev_pin</span><span class="p">),</span><span class="s1">&#39;1&#39;</span><span class="p">,</span><span class="s1">&#39;Scheduled&#39;</span><span class="p">,</span><span class="s1">&#39;Change Rack Power Status to OFF&#39;</span><span class="p">)</span>
+                            <span class="c1">#set pin mode to Auto? (no should be already done)</span>
+                            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Planned Event Start.pin </span><span class="si">%i</span><span class="s1"> set ON because event </span><span class="si">%i</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">ev_pin</span><span class="p">,</span><span class="n">ev_id</span><span class="p">))</span>
+                    <span class="k">else</span><span class="p">:</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;PIN </span><span class="si">%i</span><span class="s1"> already ON. Skipping PIN management...&#39;</span><span class="o">%</span><span class="n">ev_pin</span><span class="p">)</span>
+
+
+            <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">set_pin_on</span> <span class="ow">and</span> <span class="n">set_pin_off</span><span class="p">):</span>
+                    <span class="c1">#We have to set the pin OFF(just if is ON)</span>
+                    <span class="c1">#we are at the end of a scheduled event</span>
+                    <span class="k">if</span> <span class="n">check_GPIO_status</span><span class="p">(</span><span class="n">ev_pin</span><span class="p">,</span> <span class="n">GPIO</span><span class="o">.</span><span class="n">LOW</span><span class="p">):</span>
+                            <span class="c1">#pin is ON</span>
+                            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Pin </span><span class="si">%i</span><span class="s1"> is ON. Setting to OFF..&#39;</span><span class="o">%</span><span class="n">ev_pin</span><span class="p">)</span>
+                            <span class="n">GPIO</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">ev_pin</span><span class="p">,</span> <span class="n">GPIO</span><span class="o">.</span><span class="n">HIGH</span><span class="p">)</span>
+                            <span class="c1">#set pin status into DB</span>
+                            <span class="n">hostDB</span><span class="o">.</span><span class="n">set_pin_status</span><span class="p">(</span><span class="n">hostip</span><span class="p">,</span><span class="nb">str</span><span class="p">(</span><span class="n">ev_pin</span><span class="p">),</span><span class="s1">&#39;0&#39;</span><span class="p">,</span><span class="s1">&#39;Scheduled&#39;</span><span class="p">,</span><span class="s1">&#39;Change Rack Power Status to ON&#39;</span><span class="p">)</span>
+                            <span class="c1">#set pin mode to Auto? (no should be already done)</span>
+                            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Planned Event Start.pin </span><span class="si">%i</span><span class="s1"> set OFF because event </span><span class="si">%i</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">ev_pin</span><span class="p">,</span><span class="n">ev_id</span><span class="p">))</span>
+                    <span class="k">else</span><span class="p">:</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;PIN </span><span class="si">%i</span><span class="s1"> already OFF. Skipping PIN management...&#39;</span><span class="o">%</span><span class="n">ev_pin</span><span class="p">)</span>
+
+
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">set_pin_on</span> <span class="ow">and</span> <span class="n">set_pin_off</span><span class="p">):</span>
+                    <span class="c1">#We have to set the pin OFF(just if is ON)</span>
+                    <span class="c1">#but just in case the ev_interval is set to 0 (event not recurrent)</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">check_GPIO_status</span><span class="p">(</span><span class="n">ev_pin</span><span class="p">,</span> <span class="n">GPIO</span><span class="o">.</span><span class="n">LOW</span><span class="p">)</span> <span class="ow">and</span> <span class="n">ev_interval</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+                            <span class="c1">#pin is ON</span>
+                            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Pin </span><span class="si">%i</span><span class="s1"> is ON. Setting to OFF..&#39;</span><span class="o">%</span><span class="n">ev_pin</span><span class="p">)</span>
+                            <span class="n">GPIO</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">ev_pin</span><span class="p">,</span> <span class="n">GPIO</span><span class="o">.</span><span class="n">HIGH</span><span class="p">)</span>
+                            <span class="c1">#set pin status into DB</span>
+                            <span class="n">hostDB</span><span class="o">.</span><span class="n">set_pin_status</span><span class="p">(</span><span class="n">hostip</span><span class="p">,</span><span class="nb">str</span><span class="p">(</span><span class="n">ev_pin</span><span class="p">),</span><span class="s1">&#39;0&#39;</span><span class="p">,</span><span class="s1">&#39;Scheduled&#39;</span><span class="p">,</span><span class="s1">&#39;Change Rack Power Status to ON&#39;</span><span class="p">)</span>
+                            <span class="c1">#delete event from DB</span>
+                            <span class="n">hostDB</span><span class="o">.</span><span class="n">delete_event</span><span class="p">(</span><span class="n">ev_id</span><span class="p">)</span>
+                            <span class="c1">#set pin mode to Auto? (no should be already done)</span>
+                            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Planned Event Start.pin </span><span class="si">%i</span><span class="s1"> set OFF because event </span><span class="si">%i</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">ev_pin</span><span class="p">,</span><span class="n">ev_id</span><span class="p">))</span>
+                    <span class="k">else</span><span class="p">:</span>
+                            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;PIN </span><span class="si">%i</span><span class="s1"> already OFF. Skipping PIN management...&#39;</span><span class="o">%</span><span class="n">ev_pin</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="n">ev_interval</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span><span class="c1">#event not recurrent</span>
+                                    <span class="n">hostDB</span><span class="o">.</span><span class="n">delete_event</span><span class="p">(</span><span class="n">ev_id</span><span class="p">)</span>
+
+
+
+                    
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">to_be_served</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Event timing windows outside current time. Skipping...</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;...End of events</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;...waiting for </span><span class="si">%i</span><span class="s1"> seconds...&#39;</span><span class="o">%</span><span class="n">POLLING_TIME</span><span class="p">)</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">POLLING_TIME</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;...polling cycle finished!</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Raspberry GPIO xmlrpc 1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Flavio Ippolito.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.2.
+    </div>
+  </body>
+</html>

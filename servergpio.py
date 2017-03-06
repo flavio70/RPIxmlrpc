@@ -114,6 +114,13 @@ class ServerFuncts:
                 return ['checkServer','setGPIO']
 
         def checkServer(self):
+                ''' check XMLRPC server service status
+ 
+                :returns: string
+                :rtype: json
+
+
+                '''
                 global hostip		
                 logger.info ("serving checkServer funct...XMLRPC Server from %s" %hostip)		
                 return json.dumps("XMLRPC Server from %s" %hostip)
@@ -121,7 +128,13 @@ class ServerFuncts:
 
 
         def setGPIO(self,gpio):
-                #set GPIO pin to status value
+                '''set GPIO pin to status value and update DB.
+
+                :param list gpio: list of Dictionary in the form: {'gpio':pinid,status:'ON|OFF','modifier':userid} 
+
+                >>> setGPIO([{'gpio':5,'status':'ON','modifier':'ippolf'},{'gpio':6,'status':'OFF','modifier':'ippolf'}])
+                '''
+
                 global hostip
                 for item in gpio:
                     status = str(item['status']).upper()
@@ -147,41 +160,44 @@ class ServerFuncts:
 class ThreadedSimpleXMLRPCServer(ThreadingMixIn, SimpleXMLRPCServer):
     """ handle requests in a separate thread."""
 
-hostip = get_lan_ip()
-#server = SimpleXMLRPCServer((hostip, 8080))
-server = ThreadedSimpleXMLRPCServer((hostip, 8080))
-server.register_function(pow)
-server.register_introspection_functions()
-server.register_instance(ServerFuncts(), allow_dotted_names=True)
-server.register_multicall_functions()
 
-init_GPIO()
+if __name__ == '__main__':
+
+    hostip = get_lan_ip()
+    #server = SimpleXMLRPCServer((hostip, 8080))
+    server = ThreadedSimpleXMLRPCServer((hostip, 8080))
+    server.register_function(pow)
+    server.register_introspection_functions()
+    server.register_instance(ServerFuncts(), allow_dotted_names=True)
+    server.register_multicall_functions()
+
+    init_GPIO()
 
 
-serverThread = threading.Thread(target = server.serve_forever)
-serverThread.daemon = True
+    serverThread = threading.Thread(target = server.serve_forever)
+    serverThread.daemon = True
 
 
-try:
-    serverThread.start()
-except Exception as inst:
+    try:
+        serverThread.start()
+    except Exception as inst:
         logger.error(str(inst))
 
 
-logger.info('Serving XML-RPC requests  on %s  port 8080...' %hostip)
+    logger.info('Serving XML-RPC requests  on %s  port 8080...' %hostip)
 
 
 
-while True:
-    logger.info('################## Start new event polling cycle...#####################\n')
+    while True:
+        logger.info('################## Start new event polling cycle...#####################\n')
     
 
-    #getting event list 
-    evl=hostDB.get_events(hostip)
+        #getting event list 
+        evl=hostDB.get_events(hostip)
 
-    #managing found events
-    logger.info('managing Found events...\n')
-    for ev in evl:
+        #managing found events
+        logger.info('managing Found events...\n')
+        for ev in evl:
             ev_id=int(ev['id'])
             ev_pin=int(ev['pin'])
             ev_interval=int(ev['interval'])
@@ -277,21 +293,12 @@ while True:
 
 
 
-
-
-
-
-
-
-
-
-
                     
             if not to_be_served:
                     logger.info('Event timing windows outside current time. Skipping...\n')
 
-    logger.info('...End of events\n')
-    logger.info('...waiting for %i seconds...'%POLLING_TIME)
-    time.sleep(POLLING_TIME)
-    logger.info('...polling cycle finished!\n')
+        logger.info('...End of events\n')
+        logger.info('...waiting for %i seconds...'%POLLING_TIME)
+        time.sleep(POLLING_TIME)
+        logger.info('...polling cycle finished!\n')
 

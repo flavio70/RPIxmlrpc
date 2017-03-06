@@ -1,19 +1,9 @@
 """
-Class definition for DB Operations
+.. module::DBClass
+   :platform: Unix
+   :synopsis:Class definition for DB Operations
 
-
-CLASS DataBase
-
-  Properties
-     - host
-     - username
-     - password
-     - name
-
-  Methods
-     - __init__
-     - _connect(self)
-
+.. moduleauthor:: Flavio Ippolito <flavio.ippolito@sm-optics.com>
 
 """
 import os
@@ -35,6 +25,14 @@ logger = logging.getLogger('xmlServer')
 
 
 class rpiDB(object):
+	'''We use this class for managing MySQL DB access.
+
+	:param str host: MySQl DB Host IP Address
+	:param str name: MySql DB Name
+	:param str _username: MySql DB User
+	:param str _password: MySql DB user password
+
+	'''
 	def __init__(self):
 		self.host = settings.DATABASE['HOST']
 		self._username = settings.DATABASE['USER']
@@ -48,6 +46,22 @@ class rpiDB(object):
 
 
 	def set_pin_status(self,rpi,pin,value,user='RPI',operation='Manual'):
+                '''Set into DB the current pin information.
+
+                :param str rpi: Raspberry IP address
+                :param str pin: Raspberry pin number
+                :param str value: pin status to be set
+                :param user: User id for DB Operation 
+                :type user: str or None
+                :param operation: Operation type (Manual|Automatic)
+                :type operation: str or None
+                :returns: bool.
+                :raises: Exception
+
+                >>> DB1.set_pin_status('10.10.20.1','5','0')
+                True
+
+                '''
                 try:
                         conn=self._connect()
                         cursor=conn.cursor()
@@ -65,6 +79,19 @@ class rpiDB(object):
 
 
 	def get_pin_status(self,rpi,pin):
+                '''Get from  DB the current pin information.
+
+                :param str rpi: Raspberry IP address
+                :param int pin: Raspberry pin number
+                :returns: pin status
+                :rtype: int
+                :raises: Exception
+
+                >>> DB1.get_pin_status('10.10.20.1',5)
+                '0'
+
+                '''
+
                 try:
                         res=-1
                         conn=self._connect()
@@ -89,6 +116,21 @@ class rpiDB(object):
 
 
 	def check_pin_mode(self,rpi,pin,mode=0):
+                '''check the actual pin mode from DB.
+
+                :param str rpi: Raspberry IP address
+                :param int pin: Raspberry pin number
+                :param mode: pin mode to be checked(0,1) 0 for Automatic, 0 for Manual 
+                :type mode: str or None
+                :returns: bool.
+                :raises: Exception
+
+                >>> DB1.check_pin_mode('10.10.20.1','5',0)
+                True
+
+                '''
+
+
                 res=False
                 res_str='False'
                 mode_str='Automatic'
@@ -115,6 +157,18 @@ class rpiDB(object):
 
 
 	def get_events(self,rpi):
+                '''Get from  DB the events list related to selected RPI.
+
+                :param str rpi: Raspberry IP address
+                :returns: list of events
+                :rtype: list of dict
+                :raises: Exception
+
+                >>> DB1.get_events('10.10.20.1')
+                [{'start_time': datetime.datetime(2017, 1, 31, 15, 10), 'stop_time': datetime.datetime(2017, 1, 31, 15, 15), 'id': 8, 'pin': 4, 'interval': 1440}]
+
+                '''   
+
                 res=[]
                 try:
                         conn=self._connect()
@@ -136,6 +190,18 @@ class rpiDB(object):
                         conn.close()
 
 	def update_event(self,ev_id,start_time,stop_time):
+                '''Update event start & stop time.
+
+                :param int ev_id: DB event id to be updated
+                :param str start_time: (in the format '%Y-%m-%d %H:%M:%S')
+                :param str stop_time: (in the formant: '%Y-%m-%d %H:%M:%S')
+                :returns: bool
+                :raises: Exception
+
+                >>> DB1.update_event(3,'2016-10-12 17:00:00','2016-10-12 17:30:00' )
+                True
+
+                '''
                 try:
                         conn=self._connect()
                         cursor=conn.cursor()
@@ -158,6 +224,18 @@ class rpiDB(object):
 
 
 	def delete_event(self,ev_id):
+                '''Delete event from DB
+
+                :param int ev_id: DB event id to be deleted
+                :returns: bool
+                :raises: Exception
+
+                >>> DB1.delete_event(3)
+                True
+
+                '''
+
+
                 try:
                         conn=self._connect()
                         cursor=conn.cursor()

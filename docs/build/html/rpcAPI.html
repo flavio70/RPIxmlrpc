@@ -1,0 +1,171 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>XMLRPC Server Usage &#8212; Raspberry GPIO xmlrpc 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="DB Access APIs Documentation" href="DBAPI.html" />
+    <link rel="prev" title="Installation" href="installation.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="DBAPI.html" title="DB Access APIs Documentation"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="installation.html" title="Installation"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Raspberry GPIO xmlrpc 1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="xmlrpc-server-usage">
+<h1>XMLRPC Server Usage<a class="headerlink" href="#xmlrpc-server-usage" title="Permalink to this headline">¶</a></h1>
+<p>Once the service is up and running the XMLRPC server does the following operations:</p>
+<ul class="simple">
+<li>continuosly listens to requests coming from XMLRPC client</li>
+<li>polls the DB schema and acts the scheduled event agains selected GPIO pins</li>
+</ul>
+<div class="section" id="rpc-functions-available-for-rpc-client">
+<h2>RPC functions available for RPC client<a class="headerlink" href="#rpc-functions-available-for-rpc-client" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="servergpio.ServerFuncts">
+<em class="property">class </em><code class="descclassname">servergpio.</code><code class="descname">ServerFuncts</code><a class="reference internal" href="_modules/servergpio.html#ServerFuncts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#servergpio.ServerFuncts" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="servergpio.ServerFuncts.checkServer">
+<code class="descname">checkServer</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/servergpio.html#ServerFuncts.checkServer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#servergpio.ServerFuncts.checkServer" title="Permalink to this definition">¶</a></dt>
+<dd><p>check XMLRPC server service status</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">string</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/2/library/json.html#module-json" title="(in Python v2.7)">json</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="servergpio.ServerFuncts.setGPIO">
+<code class="descname">setGPIO</code><span class="sig-paren">(</span><em>gpio</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/servergpio.html#ServerFuncts.setGPIO"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#servergpio.ServerFuncts.setGPIO" title="Permalink to this definition">¶</a></dt>
+<dd><p>set GPIO pin to status value and update DB.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>gpio</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#list" title="(in Python v2.7)"><em>list</em></a>) &#8211; list of Dictionary in the form: {&#8216;gpio&#8217;:pinid,status:&#8217;ON|OFF&#8217;,&#8217;modifier&#8217;:userid}</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">setGPIO</span><span class="p">([{</span><span class="s1">&#39;gpio&#39;</span><span class="p">:</span><span class="mi">5</span><span class="p">,</span><span class="s1">&#39;status&#39;</span><span class="p">:</span><span class="s1">&#39;ON&#39;</span><span class="p">,</span><span class="s1">&#39;modifier&#39;</span><span class="p">:</span><span class="s1">&#39;ippolf&#39;</span><span class="p">},{</span><span class="s1">&#39;gpio&#39;</span><span class="p">:</span><span class="mi">6</span><span class="p">,</span><span class="s1">&#39;status&#39;</span><span class="p">:</span><span class="s1">&#39;OFF&#39;</span><span class="p">,</span><span class="s1">&#39;modifier&#39;</span><span class="p">:</span><span class="s1">&#39;ippolf&#39;</span><span class="p">}])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">XMLRPC Server Usage</a><ul>
+<li><a class="reference internal" href="#rpc-functions-available-for-rpc-client">RPC functions available for RPC client</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="installation.html"
+                        title="previous chapter">Installation</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="DBAPI.html"
+                        title="next chapter">DB Access APIs Documentation</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/rpcAPI.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="DBAPI.html" title="DB Access APIs Documentation"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="installation.html" title="Installation"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Raspberry GPIO xmlrpc 1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Flavio Ippolito.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.2.
+    </div>
+  </body>
+</html>
