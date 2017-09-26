@@ -173,13 +173,13 @@ class rpiDB(object):
                 try:
                         conn=self._connect()
                         cursor=conn.cursor()
-                        querystr="select idT_POWER_SCHEDULE,pin,start_time,stop_time,T_POWER_SCHEDULE.interval from T_POWER_SCHEDULE join T_POWER_MNGMT on (T_POWER_MNGMT_id_powerMngmt=id_powerMngmt) join T_NET using(T_EQUIPMENT_id_equipment) where ip='"+rpi+"';"
+                        querystr="select idT_POWER_SCHEDULE,pin,start_time,stop_time,T_POWER_SCHEDULE.interval,busy from T_POWER_SCHEDULE join T_POWER_MNGMT on (T_POWER_MNGMT_id_powerMngmt=id_powerMngmt) join T_NET using(T_EQUIPMENT_id_equipment) where ip='"+rpi+"';"
                         cursor.execute(querystr)
                         queryres = cursor.fetchall()
                         conn.close()
                         logger.info('Getting Event list for RPI %s ...\n'%rpi)
                         for row in queryres:
-                            rdict={'id':row[0],'pin':row[1],'start_time':row[2],'stop_time':row[3],'interval':row[4]}
+                            rdict={'id':row[0],'pin':row[1],'start_time':row[2],'stop_time':row[3],'interval':row[4],'busy':row[5]}
                             res.append(rdict)        
                             logger.info('Event %s'%rdict)
                         logger.info('...end of List\n')
@@ -189,12 +189,15 @@ class rpiDB(object):
                         return res
                         conn.close()
 
-	def update_event(self,ev_id,start_time,stop_time):
+                        
+
+	def update_event(self,ev_id,start_time,stop_time,busy=0):
                 '''Update event start & stop time.
 
                 :param int ev_id: DB event id to be updated
                 :param str start_time: (in the format '%Y-%m-%d %H:%M:%S')
                 :param str stop_time: (in the formant: '%Y-%m-%d %H:%M:%S')
+                :param int busy: (0,1) 1 in case
                 :returns: bool
                 :raises: Exception
 
@@ -205,7 +208,7 @@ class rpiDB(object):
                 try:
                         conn=self._connect()
                         cursor=conn.cursor()
-                        querystr="update T_POWER_SCHEDULE set `start_time`='"+start_time+"',`stop_time`='"+stop_time+"' where `idT_POWER_SCHEDULE`="+str(ev_id)
+                        querystr="update T_POWER_SCHEDULE set `start_time`='"+start_time+"',`stop_time`='"+stop_time+"',`busy`='"+str(busy)+"' where `idT_POWER_SCHEDULE`="+str(ev_id)
                         cursor.execute(querystr)
                         conn.commit()
                         conn.close()
@@ -254,3 +257,36 @@ class rpiDB(object):
 
 
 
+	def check_busy_events(self,rpi,pin,busy=1):
+                '''Check presence into DB about events related to selected RPI.
+                belonging to pin and havin busy value
+                :param str rpi: Raspberry IP address
+                :param str pin: Raspberry pin id
+                :parm str busy: POWER_SCHEDULE busy param to be checked
+                :returns: True/False
+                :rtype: bool
+                :raises: Exception
+
+                >>> DB1.check_busy_events('10.10.20.1','2','1')
+                
+                '''   
+
+                res=False
+                try:
+                        conn=self._connect()
+                        cursor=conn.cursor()
+                        querystr="select idT_POWER_SCHEDULE,pin,busy from T_POWER_SCHEDULE join T_POWER_MNGMT on (T_POWER_MNGMT_id_powerMngmt=id_powerMngmt) join T_NET using(T_EQUIPMENT_id_equipment) where ip='"+rpi+"' and pin = '"+str(pin)+"' and busy = '"+str(busy)+"';"
+                        cursor.execute(querystr)
+                        queryres = cursor.fetchall()
+                        conn.close()
+                        logger.info('Checking busy (%s) Events list for RPI %s\nbelonging to pin %s ...\n'%(str(busy),rpi,str(pin)))
+                        if queryres:
+                            res=True       
+                            logger.info('... %i Events Found!!\n'%len(queryres))
+                        else:
+                            logger.info('... No Events Found!!\n')
+                        return res
+                except Exception as inst:
+                        logger.error('DBClass.check_busy_events\n%s'%str(inst))
+                        return res
+                        conn.close()

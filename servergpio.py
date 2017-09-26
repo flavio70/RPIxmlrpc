@@ -210,7 +210,7 @@ if __name__ == '__main__':
             start_time=datetime.strptime(start_str,'%Y %m %d %H %M')
             stop_time=datetime.strptime(stop_str,'%Y %m %d %H %M')
             logger.info('Found Event id %i for pin %i.\n StartTime: %s StopTime %s'%(ev_id,ev_pin,start_time,stop_time))
-
+            
             if now >= start_time:
                     #in this case we have to update the event start time in the DB
                     #start_time+interval
@@ -218,7 +218,7 @@ if __name__ == '__main__':
                     logger.info('current Time %s >= event startTime %s'%(now,start_time))
                     logger.info('Updating DB event StartTime...')
                     start_time=start_time+timedelta(minutes=ev_interval)
-                    hostDB.update_event(ev_id,start_time.strftime('%Y-%m-%d %H:%M:%S'),stop_time.strftime('%Y-%m-%d %H:%M:%S'))
+                    hostDB.update_event(ev_id,start_time.strftime('%Y-%m-%d %H:%M:%S'),stop_time.strftime('%Y-%m-%d %H:%M:%S'),1)
                     #now check if pin has been set in manual mode
                     logger.info('Checking pin %i status...'%ev_pin)
                     if not hostDB.check_pin_mode(hostip,ev_pin):
@@ -234,7 +234,7 @@ if __name__ == '__main__':
                     logger.info('current Time %s >= event stopTime %s'%(now,start_time))
                     logger.info('Updating DB event StopTime...')
                     stop_time=stop_time+timedelta(minutes=ev_interval)
-                    hostDB.update_event(ev_id,start_time.strftime('%Y-%m-%d %H:%M:%S'),stop_time.strftime('%Y-%m-%d %H:%M:%S'))
+                    hostDB.update_event(ev_id,start_time.strftime('%Y-%m-%d %H:%M:%S'),stop_time.strftime('%Y-%m-%d %H:%M:%S'),0)
                     #now check if pin has been set in manual mode
                     logger.info('Checking pin %i status...'%ev_pin)
                     if not hostDB.check_pin_mode(hostip,ev_pin):
@@ -263,12 +263,16 @@ if __name__ == '__main__':
                     #we are at the end of a scheduled event
                     if check_GPIO_status(ev_pin, GPIO.LOW):
                             #pin is ON
-                            logger.info('Pin %i is ON. Setting to OFF..'%ev_pin)
-                            GPIO.output(ev_pin, GPIO.HIGH)
-                            #set pin status into DB
-                            hostDB.set_pin_status(hostip,str(ev_pin),'0','Scheduled','Change Rack Power Status to ON')
-                            #set pin mode to Auto? (no should be already done)
-                            logger.info('Planned Event Start.pin %i set OFF because event %i\n'%(ev_pin,ev_id))
+                            if hostDB.check_busy_events(hostip,ev_pin,1):
+                                    #we have other events active on same pin
+                                    logger.info('Keeping Pin %i ON because other events pending\n'%ev_pin)
+                            else:
+                                    logger.info('Pin %i is ON. Setting to OFF..'%ev_pin)
+                                    GPIO.output(ev_pin, GPIO.HIGH)
+                                    #set pin status into DB
+                                    hostDB.set_pin_status(hostip,str(ev_pin),'0','Scheduled','Change Rack Power Status to ON')
+                                    #set pin mode to Auto? (no should be already done)
+                                    logger.info('Planned Event Start. pin %i set OFF because event %i\n'%(ev_pin,ev_id))
                     else:logger.info('PIN %i already OFF. Skipping PIN management...'%ev_pin)
 
 
@@ -278,14 +282,18 @@ if __name__ == '__main__':
                     #but just in case the ev_interval is set to 0 (event not recurrent)
                     if (check_GPIO_status(ev_pin, GPIO.LOW) and ev_interval == 0):
                             #pin is ON
-                            logger.info('Pin %i is ON. Setting to OFF..'%ev_pin)
-                            GPIO.output(ev_pin, GPIO.HIGH)
-                            #set pin status into DB
-                            hostDB.set_pin_status(hostip,str(ev_pin),'0','Scheduled','Change Rack Power Status to ON')
-                            #delete event from DB
-                            hostDB.delete_event(ev_id)
-                            #set pin mode to Auto? (no should be already done)
-                            logger.info('Planned Event Start.pin %i set OFF because event %i\n'%(ev_pin,ev_id))
+                            if hostDB.check_busy_events(hostip,ev_pin,1):
+                                    #we have other events active on same pin
+                                    logger.info('Keeping Pin %i ON because other events pending\n'%ev_pin)
+                            else:
+                                    logger.info('Pin %i is ON. Setting to OFF..'%ev_pin)
+                                    GPIO.output(ev_pin, GPIO.HIGH)
+                                    #set pin status into DB
+                                    hostDB.set_pin_status(hostip,str(ev_pin),'0','Scheduled','Change Rack Power Status to ON')
+                                    #delete event from DB
+                                    hostDB.delete_event(ev_id)
+                                    #set pin mode to Auto? (no should be already done)
+                                    logger.info('Planned Event Start. pin %i set OFF because event %i\n'%(ev_pin,ev_id))
                     else:
                             logger.info('PIN %i already OFF. Skipping PIN management...'%ev_pin)
                             if ev_interval == 0:#event not recurrent
