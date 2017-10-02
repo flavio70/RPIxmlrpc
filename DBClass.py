@@ -12,6 +12,7 @@ import logging.config
 import settings
 import mysql.connector
 from datetime import datetime
+from ansicolors import *
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -72,7 +73,7 @@ class rpiDB(object):
                         logger.info('status %s for pin %s updated into DB. %s'%(value,pin,operation))
                         return True
                 except Exception as inst:
-                        logger.error('DBClass.set_pin_status\n%s'%str(inst))
+                        logger.error(ANSI_fail('DBClass.set_pin_status\n%s'%str(inst)))
                         return False
                         conn.close()
 
@@ -106,7 +107,7 @@ class rpiDB(object):
                         return res
 
                 except Exception as inst:
-                        logger.error('DBClass.get_pin_status\n%s'%str(inst))
+                        logger.error(ANSI_fail('DBClass.get_pin_status\n%s'%str(inst)))
                         conn.close()
                         return -1
 
@@ -149,7 +150,7 @@ class rpiDB(object):
                         logger.info('Checking pinmode %i(%s) for pin %i ... %s'%(mode,mode_str,pin,res_str))
                         return res
                 except Exception as inst:
-                        logger.error('DBClass.check_pin_mode\n%s'%str(inst))
+                        logger.error(ANSI_fail('DBClass.check_pin_mode\n%s'%str(inst)))
                         return False
                         conn.close()
 
@@ -185,7 +186,7 @@ class rpiDB(object):
                         logger.info('...end of List\n')
                         return res
                 except Exception as inst:
-                        logger.error('DBClass.get_events\n%s'%str(inst))
+                        logger.error(ANSI_fail('DBClass.get_events\n%s'%str(inst)))
                         return res
                         conn.close()
 
@@ -217,7 +218,7 @@ class rpiDB(object):
 
 
                 except Exception as inst:
-                        logger.error('DBClass.update_event\n%s'%str(inst))
+                        logger.error(ANSI_fail('DBClass.update_event\n%s'%str(inst)))
                         return False
                         conn.close()
 
@@ -251,7 +252,7 @@ class rpiDB(object):
 
 
                 except Exception as inst:
-                        logger.error('DBClass.delete_event\n%s'%str(inst))
+                        logger.error(ANSI_fail('DBClass.delete_event\n%s'%str(inst)))
                         return False
                         conn.close()
 
@@ -287,6 +288,38 @@ class rpiDB(object):
                             logger.info('... No Events Found!!\n')
                         return res
                 except Exception as inst:
-                        logger.error('DBClass.check_busy_events\n%s'%str(inst))
+                        logger.error(ANSI_fail('DBClass.check_busy_events\n%s'%str(inst)))
                         return res
                         conn.close()
+
+
+
+	def update_month_pin_counters(self,rpi,pin,update_time):
+                '''update statistics for current rpi and selected pin
+                :param str rpi: Raspberry IP address
+                :param str pin: Raspberry pin id
+
+                :param str update_time: time ticks to be added to current counters
+                :returns: True/False
+                :rtype: bool
+                :raises: Exception
+
+                >>> DB1.update_month_pin_stats('10.10.20.1','15','12','1')
+                
+                '''
+                res=False
+                try:
+                        conn=self._connect()
+                        cursor=conn.cursor()
+                        querystr="insert into T_POWER_USAGE (select null,concat(year(now()),'-',month(now())) as time_frame,T_POWER_MNGMT_id_powerMngmt,0 from T_POWER_MNGMT join T_POWER_STATUS on(id_powerMngmt=T_POWER_MNGMT_id_powerMngmt) join T_NET using(T_EQUIPMENT_id_equipment) where ip='"+rpi+"' and pin="+str(pin)+" order by last_change desc limit 1) on duplicate key update hour_counter=hour_counter+"+str(update_time)
+                        cursor.execute(querystr)
+                        conn.commit()
+                        conn.close()
+                        logger.info('Updated counters for RPI %s pin %s by %s ticks.'%(rpi,str(pin),str(update_time)))
+                        res=True
+                        return res
+                except Exception as inst:
+                        logger.error(ANSI_fail('DBClass.update_month_pin_stats\n%s'%str(inst)))
+                        return res
+                        conn.close()
+                

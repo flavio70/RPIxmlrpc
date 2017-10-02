@@ -15,10 +15,13 @@ import logging
 import logging.config
 import RPi.GPIO as GPIO
 from DBClass import rpiDB
+from ansicolors import *
 
 #polling time (sec.) used for event polling
 
 POLLING_TIME=60
+PIN_ON=GPIO.LOW
+PIN_OFF=GPIO.HIGH
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -36,6 +39,8 @@ logger = logging.getLogger('xmlServer')
 hostip=''
 # init list with pin numbers
 pinList = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]
+# init list with managed pin
+managedPinList = []
 
 
 
@@ -61,10 +66,11 @@ def get_lan_ip():
 def init_GPIO():
 	# settings for GPIOs
 	global pinList
+	global managedPinList
 	global hostip
 	global hostDB
-	logger.info("Initializing GPIOs...")
-	logger.debug("Initializing GPIOs...")
+	logger.info(ANSI_info("Initializing GPIOs..."))
+	logger.debug(ANSI_info("Initializing GPIOs..."))
 	GPIO.setwarnings(False)
 	GPIO.setmode(GPIO.BCM)
 
@@ -73,19 +79,32 @@ def init_GPIO():
 	# according to value stored into DB
  
 	for i in pinList: 
-		GPIO.setup(i, GPIO.OUT, initial=GPIO.HIGH)
+		GPIO.setup(i, GPIO.OUT, initial=PIN_OFF)
 		statusDB=hostDB.get_pin_status(hostip,i)
 
 		if statusDB == -1:
-                        GPIO.output(i, GPIO.HIGH)
+                        GPIO.output(i, PIN_ON)
 
 		if statusDB == 0:
-                        GPIO.output(i, GPIO.HIGH)
+                        GPIO.output(i, PIN_ON)
                         hostDB.set_pin_status(hostip,str(i),'0','RPI','Restore Rack Power status to ON after Power Management (RPI) REBOOT')
-
+                        managedPinList.append(i)
 		if statusDB == 1:
-		        GPIO.output(i, GPIO.LOW)
+		        GPIO.output(i, PIN_OFF)
 		        hostDB.set_pin_status(hostip,str(i),'1','RPI','Restore Rack Power status to OFF after Power Management (RPI) REBOOT')
+		        managedPinList.append(i)
+	logger.info(ANSI_info('Registered Pin List for current host: %s'%str(managedPinList)))
+	logger.debug(ANSI_info('Registered Pin List for current host: %s'%str(managedPinList)))
+
+
+def get_GPIO_status(pinArray):
+        #return list containing status for each element in pinArray
+        res=[]
+        for i in pinArray:
+                res.append(GPIO.input(i))
+        logger.info('Current status for pinList %s = %s'%(str(pinArray),str(res)))
+        logger.debug('Current status for pinList %s = %s'%(str(pinArray),str(res)))
+        return res
 
 
 
@@ -97,6 +116,35 @@ def check_GPIO_status(pin,status):
         else:
                 return False
 
+
+
+def update_GPIO_counters(prePinStatusList):
+        '''update DB conters ticks for managedPinList
+        :param str prePinStatusList: list of status before waiting time
+        '''
+        global managedPinList
+        logger.info(ANSI_info('Updating GPIO Counters for pin: %s...'%(str(managedPinList))))
+        logger.info('Previous status for pinList %s = %s'%(str(managedPinList),str(prePinStatusList)))
+        #get current status
+        currentPinStatusList=get_GPIO_status(managedPinList)
+        for i in range(0,len(managedPinList)-1):
+                currentPin=managedPinList[i]
+                prePinStatus=prePinStatusList[i]
+                currentPinStatus=currentPinStatusList[i]
+                logger.info('\tCurrent pin: %i. CurrentValue: %i, OldValue: %i'%(currentPin,currentPinStatus,prePinStatus))
+
+                if prePinStatus == 0 and currentPinStatus == 1:
+                        #pin passed from ON to OFF
+                        #we have to update the off counters for this pin
+                        logger.info('\tUpdating time ticks for Current pin: %i set to OFF in this current polling time...'%(currentPin))
+                        hostDB.update_month_pin_counters(hostip,managedPinList[i],POLLING_TIME)
+                elif prePinStatus == 1 and currentPinStatus == 1:
+                        #pin still OFF from previous polling preiod
+                        #we have to update the off counters for this pin
+                        logger.info('\tUpdating time ticks for Current pin: %i Still OFF in this current polling time...'%(currentPin))
+                        hostDB.update_month_pin_counters(hostip,managedPinList[i],POLLING_TIME)
+                else:logger.info('\tCurrent pin: %i set to ON. Skipping time ticks update...'%(currentPin))
+                        
 
 
 class ServerFuncts: 
@@ -142,11 +190,11 @@ class ServerFuncts:
                     modifier = str(item['modifier'])
                     try:
                         if  status == 'ON':
-                            GPIO.output(int(gpiopin), GPIO.LOW)
-                            hostDB.set_pin_status(hostip,gpiopin,'1',modifier,'Change Rack Power Status to OFF')
+                            GPIO.output(int(gpiopin), PIN_ON)
+                            hostDB.set_pin_status(hostip,gpiopin,'0',modifier,'Change Rack Power Status to ON')
                         else:
-                            GPIO.output(int(gpiopin), GPIO.HIGH)
-                            hostDB.set_pin_status(hostip,gpiopin,'0',modifier,'Change Rack Power status to ON')
+                            GPIO.output(int(gpiopin), PIN_OFF)
+                            hostDB.set_pin_status(hostip,gpiopin,'1',modifier,'Change Rack Power status to OFF')
                     except exception as inst:
                         logger.error(str(inst))
                         
@@ -181,7 +229,7 @@ if __name__ == '__main__':
     try:
         serverThread.start()
     except Exception as inst:
-        logger.error(str(inst))
+        logger.error(ANSI_fail(str(inst)))
 
 
     logger.info('Serving XML-RPC requests  on %s  port 8080...' %hostip)
@@ -189,11 +237,12 @@ if __name__ == '__main__':
 
 
     while True:
-        logger.info('################## Start new event polling cycle...#####################\n')
+        logger.info(ANSI_info('################## Start new event polling cycle...#####################\n'))
     
 
         #getting event list 
         evl=hostDB.get_events(hostip)
+        prePinStatus=get_GPIO_status(managedPinList)
 
         #managing found events
         logger.info('managing Found events...\n')
@@ -223,9 +272,9 @@ if __name__ == '__main__':
                     logger.info('Checking pin %i status...'%ev_pin)
                     if not hostDB.check_pin_mode(hostip,ev_pin):
                             #pin set in auto mode
-                            #we should set the pin ON
-                            set_pin_on = True
-                    else:logger.info('PIN %i set in manual Mode. Skipping PIN management...'%ev_pin)
+                            #we should set the pin OFF
+                            set_pin_off = True
+                    else:logger.info(ANSI_info('PIN %i set in manual Mode. Skipping PIN management...'%ev_pin))
 
             if now >= stop_time:
                     #in this case we have to update the event stop time in the DB
@@ -239,63 +288,68 @@ if __name__ == '__main__':
                     logger.info('Checking pin %i status...'%ev_pin)
                     if not hostDB.check_pin_mode(hostip,ev_pin):
                             #pin set in auto mode
-                            #we should set the pin OFF 
-                            set_pin_off = True
-                    else:logger.info('PIN %i set in manual Mode. Skipping PIN management...'%ev_pin)
+                            #we should set the pin ON 
+                            set_pin_on = True
+                    else:logger.info(ANSI_warning('PIN %i set in manual Mode. Skipping PIN management...'%ev_pin))
 
 
-            if (set_pin_on and not set_pin_off):
-                    #We have to set the pin ON (just if is OFF)
+            if (set_pin_off and not set_pin_on):
+                    #We have to set the pin OFF (just if is ON)
                     #we are at the begin of a scheduled event
-                    if not check_GPIO_status(ev_pin, GPIO.LOW):
-                            #pin is OFF
-                            logger.info('Pin %i is OFF. Setting to ON..'%ev_pin)
-                            GPIO.output(ev_pin, GPIO.LOW)
+                    if check_GPIO_status(ev_pin, PIN_ON):
+                            #pin is ON
+                            logger.info(ANSI_success('Pin %i is ON. Setting to OFF..'%ev_pin))
+                            GPIO.output(ev_pin, PIN_OFF)
                             #set pin status into DB
                             hostDB.set_pin_status(hostip,str(ev_pin),'1','Scheduled','Change Rack Power Status to OFF')
                             #set pin mode to Auto? (no should be already done)
-                            logger.info('Planned Event Start.pin %i set ON because event %i\n'%(ev_pin,ev_id))
-                    else:logger.info('PIN %i already ON. Skipping PIN management...'%ev_pin)
+                            logger.info('Planned Event Start.pin %i set OFF because event %i\n'%(ev_pin,ev_id))
+                    else:
+                            logger.info(ANSI_warning('PIN %i already OFF. Skipping PIN management...'%ev_pin))
 
 
-            if (not set_pin_on and set_pin_off):
-                    #We have to set the pin OFF(just if is ON)
+
+            if (not set_pin_off and set_pin_on):
+                    #We have to set the pin ON(just if is OFF and not pending events)
                     #we are at the end of a scheduled event
-                    if check_GPIO_status(ev_pin, GPIO.LOW):
-                            #pin is ON
+                    if check_GPIO_status(ev_pin, PIN_OFF):
+                            #pin is OFF
                             if hostDB.check_busy_events(hostip,ev_pin,1):
                                     #we have other events active on same pin
-                                    logger.info('Keeping Pin %i ON because other events pending\n'%ev_pin)
+                                    logger.info(ANSI_warning('Keeping Pin %i OFF because other events pending\n'%ev_pin))
                             else:
-                                    logger.info('Pin %i is ON. Setting to OFF..'%ev_pin)
-                                    GPIO.output(ev_pin, GPIO.HIGH)
+                                    logger.info(ANSI_success('Pin %i is OFF. Setting to ON..'%ev_pin))
+                                    GPIO.output(ev_pin, PIN_ON)
                                     #set pin status into DB
                                     hostDB.set_pin_status(hostip,str(ev_pin),'0','Scheduled','Change Rack Power Status to ON')
                                     #set pin mode to Auto? (no should be already done)
-                                    logger.info('Planned Event Start. pin %i set OFF because event %i\n'%(ev_pin,ev_id))
-                    else:logger.info('PIN %i already OFF. Skipping PIN management...'%ev_pin)
+                                    logger.info('Planned Event Stop. pin %i set ON because event %i\n'%(ev_pin,ev_id))
+     
+                    else:logger.info(ANSI_warning('PIN %i already ON. Skipping PIN management...'%ev_pin))
 
 
 
             if (set_pin_on and set_pin_off):
-                    #We have to set the pin OFF(just if is ON)
+                    #We have to set the pin ON(just if is OFF)
                     #but just in case the ev_interval is set to 0 (event not recurrent)
-                    if (check_GPIO_status(ev_pin, GPIO.LOW) and ev_interval == 0):
-                            #pin is ON
+                    if (check_GPIO_status(ev_pin, PIN_OFF) and ev_interval == 0):
+                            #pin is OFF
                             if hostDB.check_busy_events(hostip,ev_pin,1):
                                     #we have other events active on same pin
-                                    logger.info('Keeping Pin %i ON because other events pending\n'%ev_pin)
+                                    logger.info(ANSI_warning('Keeping Pin %i OFF because other events pending\n'%ev_pin))
+                                    if ev_interval == 0:#event not recurrent
+                                            hostDB.delete_event(ev_id)
                             else:
-                                    logger.info('Pin %i is ON. Setting to OFF..'%ev_pin)
-                                    GPIO.output(ev_pin, GPIO.HIGH)
+                                    logger.info(ANSI_success('Pin %i is OFF. Setting to ON..'%ev_pin))
+                                    GPIO.output(ev_pin, PIN_ON)
                                     #set pin status into DB
                                     hostDB.set_pin_status(hostip,str(ev_pin),'0','Scheduled','Change Rack Power Status to ON')
                                     #delete event from DB
                                     hostDB.delete_event(ev_id)
                                     #set pin mode to Auto? (no should be already done)
-                                    logger.info('Planned Event Start. pin %i set OFF because event %i\n'%(ev_pin,ev_id))
+                                    logger.info('Planned Event Start. pin %i set ON because event %i\n'%(ev_pin,ev_id))
                     else:
-                            logger.info('PIN %i already OFF. Skipping PIN management...'%ev_pin)
+                            logger.info(ANSI_warning('PIN %i already ON. Skipping PIN management...'%ev_pin))
                             if ev_interval == 0:#event not recurrent
                                     hostDB.delete_event(ev_id)
 
@@ -305,8 +359,10 @@ if __name__ == '__main__':
             if not to_be_served:
                     logger.info('Event timing windows outside current time. Skipping...\n')
 
-        logger.info('...End of events\n')
-        logger.info('...waiting for %i seconds...'%POLLING_TIME)
+        logger.info(ANSI_info('...End of events'))
+        logger.info(ANSI_info('...waiting for %i seconds...'%POLLING_TIME))
         time.sleep(POLLING_TIME)
-        logger.info('...polling cycle finished!\n')
+        logger.info(ANSI_info('...polling cycle finished!\n'))
+        update_GPIO_counters(prePinStatus)
+
 
