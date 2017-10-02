@@ -311,7 +311,8 @@ class rpiDB(object):
                 try:
                         conn=self._connect()
                         cursor=conn.cursor()
-                        querystr="insert into T_POWER_USAGE (select null,concat(year(now()),'-',month(now())) as time_frame,T_POWER_MNGMT_id_powerMngmt,0 from T_POWER_MNGMT join T_POWER_STATUS on(id_powerMngmt=T_POWER_MNGMT_id_powerMngmt) join T_NET using(T_EQUIPMENT_id_equipment) where ip='"+rpi+"' and pin="+str(pin)+" order by last_change desc limit 1) on duplicate key update hour_counter=hour_counter+"+str(update_time)
+                        #querystr="insert into T_POWER_USAGE (select null,concat(year(now()),'-',month(now())) as time_frame,T_POWER_MNGMT_id_powerMngmt,0 from T_POWER_MNGMT join T_POWER_STATUS on(id_powerMngmt=T_POWER_MNGMT_id_powerMngmt) join T_NET using(T_EQUIPMENT_id_equipment) where ip='"+rpi+"' and pin="+str(pin)+" order by last_change desc limit 1) on duplicate key update hour_counter=hour_counter+"+str(update_time)
+                        querystr="insert into T_POWER_USAGE (select null,year(now()) as year_frame,T_POWER_MNGMT_id_powerMngmt,0,month(now()) as month_frame from T_POWER_MNGMT join T_POWER_STATUS on(id_powerMngmt=T_POWER_MNGMT_id_powerMngmt) join T_NET using(T_EQUIPMENT_id_equipment) where ip='"+rpi+"' and pin="+str(pin)+" order by last_change desc limit 1) on duplicate key update hour_counter=hour_counter+"+str(update_time)
                         cursor.execute(querystr)
                         conn.commit()
                         conn.close()
