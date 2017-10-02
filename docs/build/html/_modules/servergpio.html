@@ -65,10 +65,13 @@
 <span class="kn">import</span> <span class="nn">logging.config</span>
 <span class="kn">import</span> <span class="nn">RPi.GPIO</span> <span class="k">as</span> <span class="nn">GPIO</span>
 <span class="kn">from</span> <span class="nn">DBClass</span> <span class="k">import</span> <span class="n">rpiDB</span>
+<span class="kn">from</span> <span class="nn">ansicolors</span> <span class="k">import</span> <span class="o">*</span>
 
 <span class="c1">#polling time (sec.) used for event polling</span>
 
 <span class="n">POLLING_TIME</span><span class="o">=</span><span class="mi">60</span>
+<span class="n">PIN_ON</span><span class="o">=</span><span class="n">GPIO</span><span class="o">.</span><span class="n">LOW</span>
+<span class="n">PIN_OFF</span><span class="o">=</span><span class="n">GPIO</span><span class="o">.</span><span class="n">HIGH</span>
 
 <span class="n">BASE_DIR</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
 
@@ -86,6 +89,8 @@
 <span class="n">hostip</span><span class="o">=</span><span class="s1">&#39;&#39;</span>
 <span class="c1"># init list with pin numbers</span>
 <span class="n">pinList</span> <span class="o">=</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">17</span><span class="p">,</span> <span class="mi">18</span><span class="p">,</span> <span class="mi">19</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">21</span><span class="p">,</span> <span class="mi">22</span><span class="p">,</span> <span class="mi">23</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">26</span><span class="p">]</span>
+<span class="c1"># init list with managed pin</span>
+<span class="n">managedPinList</span> <span class="o">=</span> <span class="p">[]</span>
 
 
 
@@ -111,10 +116,11 @@
 <span class="k">def</span> <span class="nf">init_GPIO</span><span class="p">():</span>
 	<span class="c1"># settings for GPIOs</span>
 	<span class="k">global</span> <span class="n">pinList</span>
+	<span class="k">global</span> <span class="n">managedPinList</span>
 	<span class="k">global</span> <span class="n">hostip</span>
 	<span class="k">global</span> <span class="n">hostDB</span>
-	<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Initializing GPIOs...&quot;</span><span class="p">)</span>
-	<span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Initializing GPIOs...&quot;</span><span class="p">)</span>
+	<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">ANSI_info</span><span class="p">(</span><span class="s2">&quot;Initializing GPIOs...&quot;</span><span class="p">))</span>
+	<span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">ANSI_info</span><span class="p">(</span><span class="s2">&quot;Initializing GPIOs...&quot;</span><span class="p">))</span>
 	<span class="n">GPIO</span><span class="o">.</span><span class="n">setwarnings</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
 	<span class="n">GPIO</span><span class="o">.</span><span class="n">setmode</span><span class="p">(</span><span class="n">GPIO</span><span class="o">.</span><span class="n">BCM</span><span class="p">)</span>
 
@@ -123,19 +129,32 @@
 	<span class="c1"># according to value stored into DB</span>
  
 	<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">pinList</span><span class="p">:</span> 
-		<span class="n">GPIO</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">GPIO</span><span class="o">.</span><span class="n">OUT</span><span class="p">,</span> <span class="n">initial</span><span class="o">=</span><span class="n">GPIO</span><span class="o">.</span><span class="n">HIGH</span><span class="p">)</span>
+		<span class="n">GPIO</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">GPIO</span><span class="o">.</span><span class="n">OUT</span><span class="p">,</span> <span class="n">initial</span><span class="o">=</span><span class="n">PIN_OFF</span><span class="p">)</span>
 		<span class="n">statusDB</span><span class="o">=</span><span class="n">hostDB</span><span class="o">.</span><span class="n">get_pin_status</span><span class="p">(</span><span class="n">hostip</span><span class="p">,</span><span class="n">i</span><span class="p">)</span>
 
 		<span class="k">if</span> <span class="n">statusDB</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
-                        <span class="n">GPIO</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">GPIO</span><span class="o">.</span><span class="n">HIGH</span><span class="p">)</span>
+                        <span class="n">GPIO</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">PIN_ON</span><span class="p">)</span>
 
 		<span class="k">if</span> <span class="n">statusDB</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                        <span class="n">GPIO</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">GPIO</span><span class="o">.</span><span class="n">HIGH</span><span class="p">)</span>
+                        <span class="n">GPIO</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">PIN_ON</span><span class="p">)</span>
                         <span class="n">hostDB</span><span class="o">.</span><span class="n">set_pin_status</span><span class="p">(</span><span class="n">hostip</span><span class="p">,</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">),</span><span class="s1">&#39;0&#39;</span><span class="p">,</span><span class="s1">&#39;RPI&#39;</span><span class="p">,</span><span class="s1">&#39;Restore Rack Power status to ON after Power Management (RPI) REBOOT&#39;</span><span class="p">)</span>
-
+                        <span class="n">managedPinList</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
 		<span class="k">if</span> <span class="n">statusDB</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-		        <span class="n">GPIO</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">GPIO</span><span class="o">.</span><span class="n">LOW</span><span class="p">)</span>
+		        <span class="n">GPIO</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">PIN_OFF</span><span class="p">)</span>
 		        <span class="n">hostDB</span><span class="o">.</span><span class="n">set_pin_status</span><span class="p">(</span><span class="n">hostip</span><span class="p">,</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">),</span><span class="s1">&#39;1&#39;</span><span class="p">,</span><span class="s1">&#39;RPI&#39;</span><span class="p">,</span><span class="s1">&#39;Restore Rack Power status to OFF after Power Management (RPI) REBOOT&#39;</span><span class="p">)</span>
+		        <span class="n">managedPinList</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+	<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">ANSI_info</span><span class="p">(</span><span class="s1">&#39;Registered Pin List for current host: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="o">%</span><span class="nb">str</span><span class="p">(</span><span class="n">managedPinList</span><span class="p">)))</span>
+	<span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">ANSI_info</span><span class="p">(</span><span class="s1">&#39;Registered Pin List for current host: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="o">%</span><span class="nb">str</span><span class="p">(</span><span class="n">managedPinList</span><span class="p">)))</span>
+
+
+<span class="k">def</span> <span class="nf">get_GPIO_status</span><span class="p">(</span><span class="n">pinArray</span><span class="p">):</span>
+        <span class="c1">#return list containing status for each element in pinArray</span>
+        <span class="n">res</span><span class="o">=</span><span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">pinArray</span><span class="p">:</span>
+                <span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">GPIO</span><span class="o">.</span><span class="n">input</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Current status for pinList </span><span class="si">%s</span><span class="s1"> = </span><span class="si">%s</span><span class="s1">&#39;</span><span class="o">%</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">pinArray</span><span class="p">),</span><span class="nb">str</span><span class="p">(</span><span class="n">res</span><span class="p">)))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Current status for pinList </span><span class="si">%s</span><span class="s1"> = </span><span class="si">%s</span><span class="s1">&#39;</span><span class="o">%</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">pinArray</span><span class="p">),</span><span class="nb">str</span><span class="p">(</span><span class="n">res</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="n">res</span>
 
 
 
@@ -147,6 +166,35 @@
         <span class="k">else</span><span class="p">:</span>
                 <span class="k">return</span> <span class="kc">False</span>
 
+
+
+<span class="k">def</span> <span class="nf">update_GPIO_counters</span><span class="p">(</span><span class="n">prePinStatusList</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;update DB conters ticks for managedPinList</span>
+<span class="sd">        :param str prePinStatusList: list of status before waiting time</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">global</span> <span class="n">managedPinList</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">ANSI_info</span><span class="p">(</span><span class="s1">&#39;Updating GPIO Counters for pin: </span><span class="si">%s</span><span class="s1">...&#39;</span><span class="o">%</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">managedPinList</span><span class="p">))))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Previous status for pinList </span><span class="si">%s</span><span class="s1"> = </span><span class="si">%s</span><span class="s1">&#39;</span><span class="o">%</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">managedPinList</span><span class="p">),</span><span class="nb">str</span><span class="p">(</span><span class="n">prePinStatusList</span><span class="p">)))</span>
+        <span class="c1">#get current status</span>
+        <span class="n">currentPinStatusList</span><span class="o">=</span><span class="n">get_GPIO_status</span><span class="p">(</span><span class="n">managedPinList</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">managedPinList</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+                <span class="n">currentPin</span><span class="o">=</span><span class="n">managedPinList</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="n">prePinStatus</span><span class="o">=</span><span class="n">prePinStatusList</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="n">currentPinStatus</span><span class="o">=</span><span class="n">currentPinStatusList</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">Current pin: </span><span class="si">%i</span><span class="s1">. CurrentValue: </span><span class="si">%i</span><span class="s1">, OldValue: </span><span class="si">%i</span><span class="s1">&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">currentPin</span><span class="p">,</span><span class="n">currentPinStatus</span><span class="p">,</span><span class="n">prePinStatus</span><span class="p">))</span>
+
+                <span class="k">if</span> <span class="n">prePinStatus</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">currentPinStatus</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="c1">#pin passed from ON to OFF</span>
+                        <span class="c1">#we have to update the off counters for this pin</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">Updating time ticks for Current pin: </span><span class="si">%i</span><span class="s1"> set to OFF in this current polling time...&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">currentPin</span><span class="p">))</span>
+                        <span class="n">hostDB</span><span class="o">.</span><span class="n">update_month_pin_counters</span><span class="p">(</span><span class="n">hostip</span><span class="p">,</span><span class="n">managedPinList</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">POLLING_TIME</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">prePinStatus</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">currentPinStatus</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="c1">#pin still OFF from previous polling preiod</span>
+                        <span class="c1">#we have to update the off counters for this pin</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">Updating time ticks for Current pin: </span><span class="si">%i</span><span class="s1"> Still OFF in this current polling time...&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">currentPin</span><span class="p">))</span>
+                        <span class="n">hostDB</span><span class="o">.</span><span class="n">update_month_pin_counters</span><span class="p">(</span><span class="n">hostip</span><span class="p">,</span><span class="n">managedPinList</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">POLLING_TIME</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">Current pin: </span><span class="si">%i</span><span class="s1"> set to ON. Skipping time ticks update...&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">currentPin</span><span class="p">))</span>
+                        
 
 
 <div class="viewcode-block" id="ServerFuncts"><a class="viewcode-back" href="../rpcAPI.html#servergpio.ServerFuncts">[docs]</a><span class="k">class</span> <span class="nc">ServerFuncts</span><span class="p">:</span> 
@@ -192,11 +240,11 @@
                     <span class="n">modifier</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="s1">&#39;modifier&#39;</span><span class="p">])</span>
                     <span class="k">try</span><span class="p">:</span>
                         <span class="k">if</span>  <span class="n">status</span> <span class="o">==</span> <span class="s1">&#39;ON&#39;</span><span class="p">:</span>
-                            <span class="n">GPIO</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">gpiopin</span><span class="p">),</span> <span class="n">GPIO</span><span class="o">.</span><span class="n">LOW</span><span class="p">)</span>
-                            <span class="n">hostDB</span><span class="o">.</span><span class="n">set_pin_status</span><span class="p">(</span><span class="n">hostip</span><span class="p">,</span><span class="n">gpiopin</span><span class="p">,</span><span class="s1">&#39;1&#39;</span><span class="p">,</span><span class="n">modifier</span><span class="p">,</span><span class="s1">&#39;Change Rack Power Status to OFF&#39;</span><span class="p">)</span>
+                            <span class="n">GPIO</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">gpiopin</span><span class="p">),</span> <span class="n">PIN_ON</span><span class="p">)</span>
+                            <span class="n">hostDB</span><span class="o">.</span><span class="n">set_pin_status</span><span class="p">(</span><span class="n">hostip</span><span class="p">,</span><span class="n">gpiopin</span><span class="p">,</span><span class="s1">&#39;0&#39;</span><span class="p">,</span><span class="n">modifier</span><span class="p">,</span><span class="s1">&#39;Change Rack Power Status to ON&#39;</span><span class="p">)</span>
                         <span class="k">else</span><span class="p">:</span>
-                            <span class="n">GPIO</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">gpiopin</span><span class="p">),</span> <span class="n">GPIO</span><span class="o">.</span><span class="n">HIGH</span><span class="p">)</span>
-                            <span class="n">hostDB</span><span class="o">.</span><span class="n">set_pin_status</span><span class="p">(</span><span class="n">hostip</span><span class="p">,</span><span class="n">gpiopin</span><span class="p">,</span><span class="s1">&#39;0&#39;</span><span class="p">,</span><span class="n">modifier</span><span class="p">,</span><span class="s1">&#39;Change Rack Power status to ON&#39;</span><span class="p">)</span>
+                            <span class="n">GPIO</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">gpiopin</span><span class="p">),</span> <span class="n">PIN_OFF</span><span class="p">)</span>
+                            <span class="n">hostDB</span><span class="o">.</span><span class="n">set_pin_status</span><span class="p">(</span><span class="n">hostip</span><span class="p">,</span><span class="n">gpiopin</span><span class="p">,</span><span class="s1">&#39;1&#39;</span><span class="p">,</span><span class="n">modifier</span><span class="p">,</span><span class="s1">&#39;Change Rack Power status to OFF&#39;</span><span class="p">)</span>
                     <span class="k">except</span> <span class="n">exception</span> <span class="k">as</span> <span class="n">inst</span><span class="p">:</span>
                         <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">inst</span><span class="p">))</span>
                         
@@ -231,7 +279,7 @@
     <span class="k">try</span><span class="p">:</span>
         <span class="n">serverThread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">inst</span><span class="p">:</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">inst</span><span class="p">))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">ANSI_fail</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">inst</span><span class="p">)))</span>
 
 
     <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Serving XML-RPC requests  on </span><span class="si">%s</span><span class="s1">  port 8080...&#39;</span> <span class="o">%</span><span class="n">hostip</span><span class="p">)</span>
@@ -239,11 +287,12 @@
 
 
     <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;################## Start new event polling cycle...#####################</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">ANSI_info</span><span class="p">(</span><span class="s1">&#39;################## Start new event polling cycle...#####################</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">))</span>
     
 
         <span class="c1">#getting event list </span>
         <span class="n">evl</span><span class="o">=</span><span class="n">hostDB</span><span class="o">.</span><span class="n">get_events</span><span class="p">(</span><span class="n">hostip</span><span class="p">)</span>
+        <span class="n">prePinStatus</span><span class="o">=</span><span class="n">get_GPIO_status</span><span class="p">(</span><span class="n">managedPinList</span><span class="p">)</span>
 
         <span class="c1">#managing found events</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;managing Found events...</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
@@ -260,7 +309,7 @@
             <span class="n">start_time</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">start_str</span><span class="p">,</span><span class="s1">&#39;%Y %m </span><span class="si">%d</span><span class="s1"> %H %M&#39;</span><span class="p">)</span>
             <span class="n">stop_time</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">stop_str</span><span class="p">,</span><span class="s1">&#39;%Y %m </span><span class="si">%d</span><span class="s1"> %H %M&#39;</span><span class="p">)</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Found Event id </span><span class="si">%i</span><span class="s1"> for pin </span><span class="si">%i</span><span class="s1">.</span><span class="se">\n</span><span class="s1"> StartTime: </span><span class="si">%s</span><span class="s1"> StopTime </span><span class="si">%s</span><span class="s1">&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">ev_id</span><span class="p">,</span><span class="n">ev_pin</span><span class="p">,</span><span class="n">start_time</span><span class="p">,</span><span class="n">stop_time</span><span class="p">))</span>
-
+            
             <span class="k">if</span> <span class="n">now</span> <span class="o">&gt;=</span> <span class="n">start_time</span><span class="p">:</span>
                     <span class="c1">#in this case we have to update the event start time in the DB</span>
                     <span class="c1">#start_time+interval</span>
@@ -268,14 +317,14 @@
                     <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;current Time </span><span class="si">%s</span><span class="s1"> &gt;= event startTime </span><span class="si">%s</span><span class="s1">&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">now</span><span class="p">,</span><span class="n">start_time</span><span class="p">))</span>
                     <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Updating DB event StartTime...&#39;</span><span class="p">)</span>
                     <span class="n">start_time</span><span class="o">=</span><span class="n">start_time</span><span class="o">+</span><span class="n">timedelta</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="n">ev_interval</span><span class="p">)</span>
-                    <span class="n">hostDB</span><span class="o">.</span><span class="n">update_event</span><span class="p">(</span><span class="n">ev_id</span><span class="p">,</span><span class="n">start_time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S&#39;</span><span class="p">),</span><span class="n">stop_time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S&#39;</span><span class="p">))</span>
+                    <span class="n">hostDB</span><span class="o">.</span><span class="n">update_event</span><span class="p">(</span><span class="n">ev_id</span><span class="p">,</span><span class="n">start_time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S&#39;</span><span class="p">),</span><span class="n">stop_time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S&#39;</span><span class="p">),</span><span class="mi">1</span><span class="p">)</span>
                     <span class="c1">#now check if pin has been set in manual mode</span>
                     <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Checking pin </span><span class="si">%i</span><span class="s1"> status...&#39;</span><span class="o">%</span><span class="n">ev_pin</span><span class="p">)</span>
                     <span class="k">if</span> <span class="ow">not</span> <span class="n">hostDB</span><span class="o">.</span><span class="n">check_pin_mode</span><span class="p">(</span><span class="n">hostip</span><span class="p">,</span><span class="n">ev_pin</span><span class="p">):</span>
                             <span class="c1">#pin set in auto mode</span>
-                            <span class="c1">#we should set the pin ON</span>
-                            <span class="n">set_pin_on</span> <span class="o">=</span> <span class="kc">True</span>
-                    <span class="k">else</span><span class="p">:</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;PIN </span><span class="si">%i</span><span class="s1"> set in manual Mode. Skipping PIN management...&#39;</span><span class="o">%</span><span class="n">ev_pin</span><span class="p">)</span>
+                            <span class="c1">#we should set the pin OFF</span>
+                            <span class="n">set_pin_off</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="k">else</span><span class="p">:</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">ANSI_info</span><span class="p">(</span><span class="s1">&#39;PIN </span><span class="si">%i</span><span class="s1"> set in manual Mode. Skipping PIN management...&#39;</span><span class="o">%</span><span class="n">ev_pin</span><span class="p">))</span>
 
             <span class="k">if</span> <span class="n">now</span> <span class="o">&gt;=</span> <span class="n">stop_time</span><span class="p">:</span>
                     <span class="c1">#in this case we have to update the event stop time in the DB</span>
@@ -284,60 +333,73 @@
                     <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;current Time </span><span class="si">%s</span><span class="s1"> &gt;= event stopTime </span><span class="si">%s</span><span class="s1">&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">now</span><span class="p">,</span><span class="n">start_time</span><span class="p">))</span>
                     <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Updating DB event StopTime...&#39;</span><span class="p">)</span>
                     <span class="n">stop_time</span><span class="o">=</span><span class="n">stop_time</span><span class="o">+</span><span class="n">timedelta</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="n">ev_interval</span><span class="p">)</span>
-                    <span class="n">hostDB</span><span class="o">.</span><span class="n">update_event</span><span class="p">(</span><span class="n">ev_id</span><span class="p">,</span><span class="n">start_time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S&#39;</span><span class="p">),</span><span class="n">stop_time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S&#39;</span><span class="p">))</span>
+                    <span class="n">hostDB</span><span class="o">.</span><span class="n">update_event</span><span class="p">(</span><span class="n">ev_id</span><span class="p">,</span><span class="n">start_time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S&#39;</span><span class="p">),</span><span class="n">stop_time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S&#39;</span><span class="p">),</span><span class="mi">0</span><span class="p">)</span>
                     <span class="c1">#now check if pin has been set in manual mode</span>
                     <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Checking pin </span><span class="si">%i</span><span class="s1"> status...&#39;</span><span class="o">%</span><span class="n">ev_pin</span><span class="p">)</span>
                     <span class="k">if</span> <span class="ow">not</span> <span class="n">hostDB</span><span class="o">.</span><span class="n">check_pin_mode</span><span class="p">(</span><span class="n">hostip</span><span class="p">,</span><span class="n">ev_pin</span><span class="p">):</span>
                             <span class="c1">#pin set in auto mode</span>
-                            <span class="c1">#we should set the pin OFF </span>
-                            <span class="n">set_pin_off</span> <span class="o">=</span> <span class="kc">True</span>
-                    <span class="k">else</span><span class="p">:</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;PIN </span><span class="si">%i</span><span class="s1"> set in manual Mode. Skipping PIN management...&#39;</span><span class="o">%</span><span class="n">ev_pin</span><span class="p">)</span>
+                            <span class="c1">#we should set the pin ON </span>
+                            <span class="n">set_pin_on</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="k">else</span><span class="p">:</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">ANSI_warning</span><span class="p">(</span><span class="s1">&#39;PIN </span><span class="si">%i</span><span class="s1"> set in manual Mode. Skipping PIN management...&#39;</span><span class="o">%</span><span class="n">ev_pin</span><span class="p">))</span>
 
 
-            <span class="k">if</span> <span class="p">(</span><span class="n">set_pin_on</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">set_pin_off</span><span class="p">):</span>
-                    <span class="c1">#We have to set the pin ON (just if is OFF)</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">set_pin_off</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">set_pin_on</span><span class="p">):</span>
+                    <span class="c1">#We have to set the pin OFF (just if is ON)</span>
                     <span class="c1">#we are at the begin of a scheduled event</span>
-                    <span class="k">if</span> <span class="ow">not</span> <span class="n">check_GPIO_status</span><span class="p">(</span><span class="n">ev_pin</span><span class="p">,</span> <span class="n">GPIO</span><span class="o">.</span><span class="n">LOW</span><span class="p">):</span>
-                            <span class="c1">#pin is OFF</span>
-                            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Pin </span><span class="si">%i</span><span class="s1"> is OFF. Setting to ON..&#39;</span><span class="o">%</span><span class="n">ev_pin</span><span class="p">)</span>
-                            <span class="n">GPIO</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">ev_pin</span><span class="p">,</span> <span class="n">GPIO</span><span class="o">.</span><span class="n">LOW</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">check_GPIO_status</span><span class="p">(</span><span class="n">ev_pin</span><span class="p">,</span> <span class="n">PIN_ON</span><span class="p">):</span>
+                            <span class="c1">#pin is ON</span>
+                            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">ANSI_success</span><span class="p">(</span><span class="s1">&#39;Pin </span><span class="si">%i</span><span class="s1"> is ON. Setting to OFF..&#39;</span><span class="o">%</span><span class="n">ev_pin</span><span class="p">))</span>
+                            <span class="n">GPIO</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">ev_pin</span><span class="p">,</span> <span class="n">PIN_OFF</span><span class="p">)</span>
                             <span class="c1">#set pin status into DB</span>
                             <span class="n">hostDB</span><span class="o">.</span><span class="n">set_pin_status</span><span class="p">(</span><span class="n">hostip</span><span class="p">,</span><span class="nb">str</span><span class="p">(</span><span class="n">ev_pin</span><span class="p">),</span><span class="s1">&#39;1&#39;</span><span class="p">,</span><span class="s1">&#39;Scheduled&#39;</span><span class="p">,</span><span class="s1">&#39;Change Rack Power Status to OFF&#39;</span><span class="p">)</span>
                             <span class="c1">#set pin mode to Auto? (no should be already done)</span>
-                            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Planned Event Start.pin </span><span class="si">%i</span><span class="s1"> set ON because event </span><span class="si">%i</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">ev_pin</span><span class="p">,</span><span class="n">ev_id</span><span class="p">))</span>
-                    <span class="k">else</span><span class="p">:</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;PIN </span><span class="si">%i</span><span class="s1"> already ON. Skipping PIN management...&#39;</span><span class="o">%</span><span class="n">ev_pin</span><span class="p">)</span>
-
-
-            <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">set_pin_on</span> <span class="ow">and</span> <span class="n">set_pin_off</span><span class="p">):</span>
-                    <span class="c1">#We have to set the pin OFF(just if is ON)</span>
-                    <span class="c1">#we are at the end of a scheduled event</span>
-                    <span class="k">if</span> <span class="n">check_GPIO_status</span><span class="p">(</span><span class="n">ev_pin</span><span class="p">,</span> <span class="n">GPIO</span><span class="o">.</span><span class="n">LOW</span><span class="p">):</span>
-                            <span class="c1">#pin is ON</span>
-                            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Pin </span><span class="si">%i</span><span class="s1"> is ON. Setting to OFF..&#39;</span><span class="o">%</span><span class="n">ev_pin</span><span class="p">)</span>
-                            <span class="n">GPIO</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">ev_pin</span><span class="p">,</span> <span class="n">GPIO</span><span class="o">.</span><span class="n">HIGH</span><span class="p">)</span>
-                            <span class="c1">#set pin status into DB</span>
-                            <span class="n">hostDB</span><span class="o">.</span><span class="n">set_pin_status</span><span class="p">(</span><span class="n">hostip</span><span class="p">,</span><span class="nb">str</span><span class="p">(</span><span class="n">ev_pin</span><span class="p">),</span><span class="s1">&#39;0&#39;</span><span class="p">,</span><span class="s1">&#39;Scheduled&#39;</span><span class="p">,</span><span class="s1">&#39;Change Rack Power Status to ON&#39;</span><span class="p">)</span>
-                            <span class="c1">#set pin mode to Auto? (no should be already done)</span>
                             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Planned Event Start.pin </span><span class="si">%i</span><span class="s1"> set OFF because event </span><span class="si">%i</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">ev_pin</span><span class="p">,</span><span class="n">ev_id</span><span class="p">))</span>
-                    <span class="k">else</span><span class="p">:</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;PIN </span><span class="si">%i</span><span class="s1"> already OFF. Skipping PIN management...&#39;</span><span class="o">%</span><span class="n">ev_pin</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">ANSI_warning</span><span class="p">(</span><span class="s1">&#39;PIN </span><span class="si">%i</span><span class="s1"> already OFF. Skipping PIN management...&#39;</span><span class="o">%</span><span class="n">ev_pin</span><span class="p">))</span>
+
+
+
+            <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">set_pin_off</span> <span class="ow">and</span> <span class="n">set_pin_on</span><span class="p">):</span>
+                    <span class="c1">#We have to set the pin ON(just if is OFF and not pending events)</span>
+                    <span class="c1">#we are at the end of a scheduled event</span>
+                    <span class="k">if</span> <span class="n">check_GPIO_status</span><span class="p">(</span><span class="n">ev_pin</span><span class="p">,</span> <span class="n">PIN_OFF</span><span class="p">):</span>
+                            <span class="c1">#pin is OFF</span>
+                            <span class="k">if</span> <span class="n">hostDB</span><span class="o">.</span><span class="n">check_busy_events</span><span class="p">(</span><span class="n">hostip</span><span class="p">,</span><span class="n">ev_pin</span><span class="p">,</span><span class="mi">1</span><span class="p">):</span>
+                                    <span class="c1">#we have other events active on same pin</span>
+                                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">ANSI_warning</span><span class="p">(</span><span class="s1">&#39;Keeping Pin </span><span class="si">%i</span><span class="s1"> OFF because other events pending</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">%</span><span class="n">ev_pin</span><span class="p">))</span>
+                            <span class="k">else</span><span class="p">:</span>
+                                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">ANSI_success</span><span class="p">(</span><span class="s1">&#39;Pin </span><span class="si">%i</span><span class="s1"> is OFF. Setting to ON..&#39;</span><span class="o">%</span><span class="n">ev_pin</span><span class="p">))</span>
+                                    <span class="n">GPIO</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">ev_pin</span><span class="p">,</span> <span class="n">PIN_ON</span><span class="p">)</span>
+                                    <span class="c1">#set pin status into DB</span>
+                                    <span class="n">hostDB</span><span class="o">.</span><span class="n">set_pin_status</span><span class="p">(</span><span class="n">hostip</span><span class="p">,</span><span class="nb">str</span><span class="p">(</span><span class="n">ev_pin</span><span class="p">),</span><span class="s1">&#39;0&#39;</span><span class="p">,</span><span class="s1">&#39;Scheduled&#39;</span><span class="p">,</span><span class="s1">&#39;Change Rack Power Status to ON&#39;</span><span class="p">)</span>
+                                    <span class="c1">#set pin mode to Auto? (no should be already done)</span>
+                                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Planned Event Stop. pin </span><span class="si">%i</span><span class="s1"> set ON because event </span><span class="si">%i</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">ev_pin</span><span class="p">,</span><span class="n">ev_id</span><span class="p">))</span>
+     
+                    <span class="k">else</span><span class="p">:</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">ANSI_warning</span><span class="p">(</span><span class="s1">&#39;PIN </span><span class="si">%i</span><span class="s1"> already ON. Skipping PIN management...&#39;</span><span class="o">%</span><span class="n">ev_pin</span><span class="p">))</span>
 
 
 
             <span class="k">if</span> <span class="p">(</span><span class="n">set_pin_on</span> <span class="ow">and</span> <span class="n">set_pin_off</span><span class="p">):</span>
-                    <span class="c1">#We have to set the pin OFF(just if is ON)</span>
+                    <span class="c1">#We have to set the pin ON(just if is OFF)</span>
                     <span class="c1">#but just in case the ev_interval is set to 0 (event not recurrent)</span>
-                    <span class="k">if</span> <span class="p">(</span><span class="n">check_GPIO_status</span><span class="p">(</span><span class="n">ev_pin</span><span class="p">,</span> <span class="n">GPIO</span><span class="o">.</span><span class="n">LOW</span><span class="p">)</span> <span class="ow">and</span> <span class="n">ev_interval</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
-                            <span class="c1">#pin is ON</span>
-                            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Pin </span><span class="si">%i</span><span class="s1"> is ON. Setting to OFF..&#39;</span><span class="o">%</span><span class="n">ev_pin</span><span class="p">)</span>
-                            <span class="n">GPIO</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">ev_pin</span><span class="p">,</span> <span class="n">GPIO</span><span class="o">.</span><span class="n">HIGH</span><span class="p">)</span>
-                            <span class="c1">#set pin status into DB</span>
-                            <span class="n">hostDB</span><span class="o">.</span><span class="n">set_pin_status</span><span class="p">(</span><span class="n">hostip</span><span class="p">,</span><span class="nb">str</span><span class="p">(</span><span class="n">ev_pin</span><span class="p">),</span><span class="s1">&#39;0&#39;</span><span class="p">,</span><span class="s1">&#39;Scheduled&#39;</span><span class="p">,</span><span class="s1">&#39;Change Rack Power Status to ON&#39;</span><span class="p">)</span>
-                            <span class="c1">#delete event from DB</span>
-                            <span class="n">hostDB</span><span class="o">.</span><span class="n">delete_event</span><span class="p">(</span><span class="n">ev_id</span><span class="p">)</span>
-                            <span class="c1">#set pin mode to Auto? (no should be already done)</span>
-                            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Planned Event Start.pin </span><span class="si">%i</span><span class="s1"> set OFF because event </span><span class="si">%i</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">ev_pin</span><span class="p">,</span><span class="n">ev_id</span><span class="p">))</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">check_GPIO_status</span><span class="p">(</span><span class="n">ev_pin</span><span class="p">,</span> <span class="n">PIN_OFF</span><span class="p">)</span> <span class="ow">and</span> <span class="n">ev_interval</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+                            <span class="c1">#pin is OFF</span>
+                            <span class="k">if</span> <span class="n">hostDB</span><span class="o">.</span><span class="n">check_busy_events</span><span class="p">(</span><span class="n">hostip</span><span class="p">,</span><span class="n">ev_pin</span><span class="p">,</span><span class="mi">1</span><span class="p">):</span>
+                                    <span class="c1">#we have other events active on same pin</span>
+                                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">ANSI_warning</span><span class="p">(</span><span class="s1">&#39;Keeping Pin </span><span class="si">%i</span><span class="s1"> OFF because other events pending</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">%</span><span class="n">ev_pin</span><span class="p">))</span>
+                                    <span class="k">if</span> <span class="n">ev_interval</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span><span class="c1">#event not recurrent</span>
+                                            <span class="n">hostDB</span><span class="o">.</span><span class="n">delete_event</span><span class="p">(</span><span class="n">ev_id</span><span class="p">)</span>
+                            <span class="k">else</span><span class="p">:</span>
+                                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">ANSI_success</span><span class="p">(</span><span class="s1">&#39;Pin </span><span class="si">%i</span><span class="s1"> is OFF. Setting to ON..&#39;</span><span class="o">%</span><span class="n">ev_pin</span><span class="p">))</span>
+                                    <span class="n">GPIO</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">ev_pin</span><span class="p">,</span> <span class="n">PIN_ON</span><span class="p">)</span>
+                                    <span class="c1">#set pin status into DB</span>
+                                    <span class="n">hostDB</span><span class="o">.</span><span class="n">set_pin_status</span><span class="p">(</span><span class="n">hostip</span><span class="p">,</span><span class="nb">str</span><span class="p">(</span><span class="n">ev_pin</span><span class="p">),</span><span class="s1">&#39;0&#39;</span><span class="p">,</span><span class="s1">&#39;Scheduled&#39;</span><span class="p">,</span><span class="s1">&#39;Change Rack Power Status to ON&#39;</span><span class="p">)</span>
+                                    <span class="c1">#delete event from DB</span>
+                                    <span class="n">hostDB</span><span class="o">.</span><span class="n">delete_event</span><span class="p">(</span><span class="n">ev_id</span><span class="p">)</span>
+                                    <span class="c1">#set pin mode to Auto? (no should be already done)</span>
+                                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Planned Event Start. pin </span><span class="si">%i</span><span class="s1"> set ON because event </span><span class="si">%i</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">ev_pin</span><span class="p">,</span><span class="n">ev_id</span><span class="p">))</span>
                     <span class="k">else</span><span class="p">:</span>
-                            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;PIN </span><span class="si">%i</span><span class="s1"> already OFF. Skipping PIN management...&#39;</span><span class="o">%</span><span class="n">ev_pin</span><span class="p">)</span>
+                            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">ANSI_warning</span><span class="p">(</span><span class="s1">&#39;PIN </span><span class="si">%i</span><span class="s1"> already ON. Skipping PIN management...&#39;</span><span class="o">%</span><span class="n">ev_pin</span><span class="p">))</span>
                             <span class="k">if</span> <span class="n">ev_interval</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span><span class="c1">#event not recurrent</span>
                                     <span class="n">hostDB</span><span class="o">.</span><span class="n">delete_event</span><span class="p">(</span><span class="n">ev_id</span><span class="p">)</span>
 
@@ -347,10 +409,12 @@
             <span class="k">if</span> <span class="ow">not</span> <span class="n">to_be_served</span><span class="p">:</span>
                     <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Event timing windows outside current time. Skipping...</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
 
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;...End of events</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;...waiting for </span><span class="si">%i</span><span class="s1"> seconds...&#39;</span><span class="o">%</span><span class="n">POLLING_TIME</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">ANSI_info</span><span class="p">(</span><span class="s1">&#39;...End of events&#39;</span><span class="p">))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">ANSI_info</span><span class="p">(</span><span class="s1">&#39;...waiting for </span><span class="si">%i</span><span class="s1"> seconds...&#39;</span><span class="o">%</span><span class="n">POLLING_TIME</span><span class="p">))</span>
         <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">POLLING_TIME</span><span class="p">)</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;...polling cycle finished!</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">ANSI_info</span><span class="p">(</span><span class="s1">&#39;...polling cycle finished!</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">))</span>
+        <span class="n">update_GPIO_counters</span><span class="p">(</span><span class="n">prePinStatus</span><span class="p">)</span>
+
 
 </pre></div>
 
