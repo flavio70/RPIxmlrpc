@@ -133,17 +133,17 @@ def update_GPIO_counters(prePinStatusList):
                 currentPinStatus=currentPinStatusList[i]
                 logger.info('\tCurrent pin: %i. CurrentValue: %i, OldValue: %i'%(currentPin,currentPinStatus,prePinStatus))
 
-                if prePinStatus == 0 and currentPinStatus == 1:
-                        #pin passed from ON to OFF
+                if prePinStatus == 1 and currentPinStatus == 0:
+                        #pin passed from OFF to ON
                         #we have to update the off counters for this pin
-                        logger.info('\tUpdating time ticks for Current pin: %i set to OFF in this current polling time...'%(currentPin))
+                        logger.info('\tUpdating time ticks for Current pin: %i set to ON in this current polling time...'%(currentPin))
                         hostDB.update_month_pin_counters(hostip,managedPinList[i],POLLING_TIME)
-                elif prePinStatus == 1 and currentPinStatus == 1:
-                        #pin still OFF from previous polling preiod
+                elif prePinStatus == 0 and currentPinStatus == 0:
+                        #pin still ON from previous polling preiod
                         #we have to update the off counters for this pin
-                        logger.info('\tUpdating time ticks for Current pin: %i Still OFF in this current polling time...'%(currentPin))
+                        logger.info('\tUpdating time ticks for Current pin: %i Still ON in this current polling time...'%(currentPin))
                         hostDB.update_month_pin_counters(hostip,managedPinList[i],POLLING_TIME)
-                else:logger.info('\tCurrent pin: %i set to ON. Skipping time ticks update...'%(currentPin))
+                else:logger.info('\tCurrent pin: %i set to OFF. Skipping time ticks update...'%(currentPin))
                         
 
 
