@@ -127,7 +127,7 @@ def update_GPIO_counters(prePinStatusList):
         logger.info('Previous status for pinList %s = %s'%(str(managedPinList),str(prePinStatusList)))
         #get current status
         currentPinStatusList=get_GPIO_status(managedPinList)
-        for i in range(0,len(managedPinList)-1):
+        for i in range(0,len(managedPinList)):
                 currentPin=managedPinList[i]
                 prePinStatus=prePinStatusList[i]
                 currentPinStatus=currentPinStatusList[i]
