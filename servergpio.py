@@ -83,7 +83,7 @@ def init_GPIO():
 		statusDB=hostDB.get_pin_status(hostip,i)
 
 		if statusDB == -1:
-                        GPIO.output(i, PIN_ON)
+                        GPIO.output(i, PIN_OFF)
 
 		if statusDB == 0:
                         GPIO.output(i, PIN_ON)
