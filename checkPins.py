@@ -19,6 +19,7 @@ import RPi.GPIO as GPIO
 #polling time (sec.) used for event polling
 
 POLLING_TIME=2
+POLLING_TIME_ALL=5
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -70,6 +71,13 @@ if __name__ == '__main__':
             GPIO.setup(i, GPIO.OUT, initial=GPIO.HIGH)
             logger.info('\t...Done!!!\n')
             
+    time.sleep(2)
+    logger.info('\tChecking ALL Pin ON for %i secs...'%(POLLING_TIME_ALL))
+    for i in pinList:
+            GPIO.setup(i, GPIO.OUT, initial=GPIO.LOW)        
+    time.sleep(POLLING_TIME_ALL)
+    for i in pinList:
+            GPIO.setup(i, GPIO.OUT, initial=GPIO.HIGH)
 
     
     logger.info('End of Execution')
