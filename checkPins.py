@@ -16,6 +16,10 @@ import logging.config
 import RPi.GPIO as GPIO
 #from DBClass import rpiDB
 
+
+PIN_ON=GPIO.HIGH
+PIN_OFF=GPIO.LOW
+
 #polling time (sec.) used for event polling
 
 POLLING_TIME=2
@@ -45,10 +49,10 @@ def init_GPIO():
 
 
 	# loop through pins and set mode to output and state
-	# according to value stored into DB
+
  
 	for i in pinList: 
-		GPIO.setup(i, GPIO.OUT, initial=GPIO.HIGH)
+		GPIO.setup(i, GPIO.OUT, initial=PIN_OFF)
 	logger.info("...Initialized!!")		
 
 
@@ -66,18 +70,18 @@ if __name__ == '__main__':
 
     for i in pinList:
             logger.info('\tChecking Pin %i ON for %i secs...'%(i,POLLING_TIME))
-            GPIO.setup(i, GPIO.OUT, initial=GPIO.LOW)
+            GPIO.setup(i, GPIO.OUT, initial=PIN_ON)
             time.sleep(POLLING_TIME)
-            GPIO.setup(i, GPIO.OUT, initial=GPIO.HIGH)
+            GPIO.setup(i, GPIO.OUT, initial=PIN_OFF)
             logger.info('\t...Done!!!\n')
             
     time.sleep(2)
     logger.info('\tChecking ALL Pin ON for %i secs...'%(POLLING_TIME_ALL))
     for i in pinList:
-            GPIO.setup(i, GPIO.OUT, initial=GPIO.LOW)        
+            GPIO.setup(i, GPIO.OUT, initial=PIN_ON)        
     time.sleep(POLLING_TIME_ALL)
     for i in pinList:
-            GPIO.setup(i, GPIO.OUT, initial=GPIO.HIGH)
+            GPIO.setup(i, GPIO.OUT, initial=PIN_OFF)
 
     
     logger.info('End of Execution')

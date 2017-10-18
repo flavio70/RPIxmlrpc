@@ -20,8 +20,8 @@ from ansicolors import *
 #polling time (sec.) used for event polling
 
 POLLING_TIME=60
-PIN_ON=GPIO.LOW
-PIN_OFF=GPIO.HIGH
+PIN_ON=GPIO.HIGH
+PIN_OFF=GPIO.LOW
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -133,13 +133,13 @@ def update_GPIO_counters(prePinStatusList):
                 currentPinStatus=currentPinStatusList[i]
                 logger.info('\tCurrent pin: %i. CurrentValue: %i, OldValue: %i'%(currentPin,currentPinStatus,prePinStatus))
 
-                if prePinStatus == 1 and currentPinStatus == 0:
+                if prePinStatus == PIN_OFF and currentPinStatus == PIN_ON:
                         #pin passed from OFF to ON
                         #we have to update the off counters for this pin
                         logger.info('\tUpdating time ticks for Current pin: %i set to ON in this current polling time...'%(currentPin))
                         hostDB.update_month_pin_counters(hostip,managedPinList[i],POLLING_TIME)
-                elif prePinStatus == 0 and currentPinStatus == 0:
-                        #pin still ON from previous polling preiod
+                elif prePinStatus == PIN_ON and currentPinStatus == PIN_ON:
+                        #pin still ON from previous polling period
                         #we have to update the off counters for this pin
                         logger.info('\tUpdating time ticks for Current pin: %i Still ON in this current polling time...'%(currentPin))
                         hostDB.update_month_pin_counters(hostip,managedPinList[i],POLLING_TIME)
