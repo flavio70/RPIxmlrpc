@@ -42,8 +42,12 @@ class rpiDB(object):
 		self.name = settings.DATABASE['NAME']
 
 	def _connect(self):
-		return mysql.connector.connect(user=self._username,password=self._password,host=self.host,database=self.name,port=self._port)
-
+                try:
+                        return mysql.connector.connect(user=self._username,password=self._password,host=self.host,database=self.name,port=self._port)
+                except Exception as inst:
+                        logger.error(ANSI_fail('DBClass._connect\n%s'%str(inst)))
+                        return False
+                        
 
 
 	def set_pin_status(self,rpi,pin,value,user='RPI',operation='Manual'):
@@ -96,19 +100,22 @@ class rpiDB(object):
                 try:
                         res=-1
                         conn=self._connect()
-                        cursor=conn.cursor()
-                        querystr="select power_status from T_POWER_STATUS join T_POWER_MNGMT on (T_POWER_MNGMT_id_powerMngmt=id_powerMngmt) join T_NET using(T_EQUIPMENT_id_equipment) where ip='"+rpi+"' and pin="+str(pin)+" order by last_change desc limit 1;"
-                        cursor.execute(querystr)
-                        queryres = cursor.fetchone()
-                        res=queryres[0]
-                        conn.close()
-                        logger.info('Current DB status for pin %i : %i'%(pin,res))
-
-                        return res
+                        if conn:
+                                cursor=conn.cursor()
+                                querystr="select power_status from T_POWER_STATUS join T_POWER_MNGMT on (T_POWER_MNGMT_id_powerMngmt=id_powerMngmt) join T_NET using(T_EQUIPMENT_id_equipment) where ip='"+rpi+"' and pin="+str(pin)+" order by last_change desc limit 1;"
+                                cursor.execute(querystr)
+                                queryres = cursor.fetchone()
+                                res=queryres[0]
+                                conn.close()
+                                logger.info('Current DB status for pin %i : %i'%(pin,res))
+                                return res
+                        else:
+                                return -2
+                        
 
                 except Exception as inst:
-                        logger.error(ANSI_fail('DBClass.get_pin_status\n%s'%str(inst)))
-                        #conn.close()
+                        logger.error(ANSI_fail('DBClass.get_pin_status for pin %i\n%s'%(pin,str(inst))))
+                        conn.close()
                         return -1
 
 

@@ -28,7 +28,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # init DB instance for current host
 
 hostDB=rpiDB()
-
+DBConnFlag=True
 
 # init logging
 
@@ -38,7 +38,7 @@ logger = logging.getLogger('xmlServer')
 
 hostip=''
 # init list with pin numbers
-pinList = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]
+pinList = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
 # init list with managed pin
 managedPinList = []
 
@@ -69,6 +69,7 @@ def init_GPIO():
 	global managedPinList
 	global hostip
 	global hostDB
+	global DBConnFlag
 	logger.info(ANSI_info("Initializing GPIOs..."))
 	logger.debug(ANSI_info("Initializing GPIOs..."))
 	GPIO.setwarnings(False)
@@ -79,11 +80,17 @@ def init_GPIO():
 	# according to value stored into DB
  
 	for i in pinList: 
-		GPIO.setup(i, GPIO.OUT, initial=PIN_OFF)
+		GPIO.setup(i, GPIO.OUT, initial=PIN_ON)
 		statusDB=hostDB.get_pin_status(hostip,i)
+		if statusDB == -2:
+                        #GPIO.output(i, PIN_ON)
+                        DBConnFlag=False
+                        logger.error('DB Connection Not available')
+		else:
+                        DBConnFlag=True
 
 		if statusDB == -1:
-                        GPIO.output(i, PIN_OFF)
+                        GPIO.output(i, PIN_ON)
 
 		if statusDB == 0:
                         GPIO.output(i, PIN_ON)
@@ -236,7 +243,11 @@ if __name__ == '__main__':
 
 
 
-    while True:
+    while True:           
+        if not DBConnFlag:
+                logger.info(ANSI_warning('DB was not available when start...Trying to reinit...'))
+                init_GPIO()
+                
         logger.info(ANSI_info('################## Start new event polling cycle...#####################\n'))
     
 
