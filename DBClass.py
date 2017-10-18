@@ -108,7 +108,7 @@ class rpiDB(object):
 
                 except Exception as inst:
                         logger.error(ANSI_fail('DBClass.get_pin_status\n%s'%str(inst)))
-                        conn.close()
+                        #conn.close()
                         return -1
 
 
