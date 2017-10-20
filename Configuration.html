@@ -1,0 +1,261 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+	<title></title>
+	<meta name="generator" content="LibreOffice 4.3.3.2 (Linux)"/>
+	<meta name="created" content="00:00:00"/>
+	<meta name="changed" content="2017-10-20T08:57:45.454941915"/>
+	<meta name="created" content="00:00:00">
+	<meta name="changed" content="2017-10-18T16:41:40.821624950">
+	<meta name="created" content="00:00:00">
+	<meta name="changed" content="2017-10-18T16:40:36.245305600">
+	<meta name="created" content="2017-09-28T10:47:36.678525713">
+	<meta name="changed" content="2017-09-28T11:12:12.319251943">
+	<style type="text/css">
+		@page { margin: 2cm }
+		p { margin-bottom: 0.25cm; color: #000000; line-height: 120% }
+		h1 { margin-bottom: 0.21cm; color: #000000 }
+		h1.western { font-family: "Nimbus Sans L", sans-serif; font-size: 18pt }
+		h1.cjk { font-family: "DejaVu Sans"; font-size: 18pt }
+		h1.ctl { font-family: "FreeSans"; font-size: 18pt }
+		a:link { so-language: zxx }
+	</style>
+</head>
+<body lang="it-IT" text="#000000" dir="ltr" style="background: transparent">
+<h1 class="western"><font color="#990000">LAN Settings (eth0)</font></h1>
+<p><font face="DejaVu Sans Condensed, sans-serif"><i><b>$ sudo nano
+/etc/network/interfaces</b></i></font></p>
+<ul>
+	<li/>
+<p style="font-variant: normal; font-style: normal"><font color="#3465a4"><font face="DejaVu Sans Condensed, sans-serif"><b>method
+	1</b></font></font></p>
+</ul>
+<p style="margin-left: 1.25cm"><font face="DejaVu Sans Condensed, sans-serif">auto
+eth0</font></p>
+<p style="margin-left: 1.25cm"><font face="DejaVu Sans Condensed, sans-serif">iface
+eth0 inet manual</font></p>
+<p style="margin-left: 1.25cm"><br/>
+<br/>
+
+</p>
+<p style="margin-left: 1.25cm"><font face="DejaVu Sans Condensed, sans-serif">set
+address from GUI (Network preferences) i.e:</font></p>
+<p style="margin-left: 1.25cm"><font face="DejaVu Sans Condensed, sans-serif">IP:
+151.98.130.155/24</font></p>
+<p style="margin-left: 1.25cm"><font face="DejaVu Sans Condensed, sans-serif">ROUTER:
+151.98.130.1</font></p>
+<p style="margin-left: 1.25cm"><font face="DejaVu Sans Condensed, sans-serif">DNS
+SERVES: 135.239.25.53 135.120.0.18</font></p>
+<ul>
+	<li/>
+<p><font color="#3465a4"><font face="DejaVu Sans Condensed, sans-serif"><b>method
+	2 (we are using this one)</b></font></font></p>
+</ul>
+<p style="margin-left: 1.25cm"><font face="DejaVu Sans Condensed, sans-serif"><i><b>$
+sudo nano /etc/network/interfaces</b></i></font></p>
+<p style="margin-left: 1.25cm; font-weight: normal"><font face="DejaVu Sans Condensed, sans-serif">auto
+eth0</font></p>
+<p style="margin-left: 1.25cm; font-weight: normal"><font face="DejaVu Sans Condensed, sans-serif">iface
+eth0 inet static</font></p>
+<p style="margin-left: 1.25cm; font-weight: normal"><font face="DejaVu Sans Condensed, sans-serif">address
+151.98.130.155</font></p>
+<p style="margin-left: 1.25cm; font-weight: normal"><font face="DejaVu Sans Condensed, sans-serif">netmask
+255.255.255.0</font></p>
+<p style="margin-left: 1.25cm; font-weight: normal"><font face="DejaVu Sans Condensed, sans-serif">gateway
+151.98.130.1</font></p>
+<p style="margin-left: 1.25cm; font-weight: normal"><font face="DejaVu Sans Condensed, sans-serif">dns-nameservers
+135.239.25.53 135.120.0.18</font></p>
+<ul>
+	<p style="font-weight: normal"></p>
+</ul>
+<p style="margin-left: 1.25cm; font-weight: normal"><font face="DejaVu Sans Condensed, sans-serif">restart
+network service</font></p>
+<p style="margin-left: 1.25cm"><font face="DejaVu Sans Condensed, sans-serif"><i><b>$
+/etc/init.d/networking restart</b></i></font></p>
+<p style="margin-left: 1.25cm"><br/>
+<br/>
+
+</p>
+<h1 class="western" style="font-variant: normal; font-style: normal"><font color="#990000"><b>NTP
+Settings</b></font></h1>
+<p><font face="DejaVu Sans Condensed, sans-serif"><i><b>$ sudo nano
+/etc/ntp.conf</b></i></font></p>
+<p style="font-variant: normal; font-style: normal; font-weight: normal">
+<font face="DejaVu Sans Condensed, sans-serif">- add servers:</font></p>
+<p style="margin-left: 1.25cm; font-variant: normal; font-style: normal; font-weight: normal">
+<font face="DejaVu Sans Condensed, sans-serif">server 135.239.25.53
+iburst</font></p>
+<p style="margin-left: 1.25cm; font-variant: normal; font-style: normal; font-weight: normal">
+<font face="DejaVu Sans Condensed, sans-serif">server 135.120.0.18
+iburst</font></p>
+<p><br/>
+<br/>
+
+</p>
+<p style="font-variant: normal; font-style: normal; font-weight: normal">
+<font face="DejaVu Sans Condensed, sans-serif">- restart ntp service</font></p>
+<p><font face="DejaVu Sans Condensed, sans-serif"><i><b>$ sudo
+/etc/init/d/ntp restart</b></i></font></p>
+<p style="font-variant: normal; font-style: normal; font-weight: normal">
+<font face="DejaVu Sans Condensed, sans-serif">- check ntp status</font></p>
+<p><font face="DejaVu Sans Condensed, sans-serif"><i><b>$ ntpq -pn</b></i></font></p>
+<p><br/>
+<br/>
+
+</p>
+<h1 class="western"><font color="#990000">HOSTNAME Settings</font></h1>
+<p><font face="DejaVu Sans Condensed, sans-serif"><i><b>$ sudo nano
+/etc/hostname</b></i></font></p>
+<p><font face="DejaVu Sans Condensed, sans-serif">Insert desired
+hostname (<font color="#3465a4">RPI-PwrMan-xx</font>) and close this
+file (CTRL+X...) and save changes (...press &quot;y&quot; and Enter).
+Now edit the second:</font></p>
+<p><font face="DejaVu Sans Condensed, sans-serif"><i><b>$ sudo nano
+/etc/hosts</b></i></font></p>
+<p><font face="DejaVu Sans Condensed, sans-serif">And replace all
+items with previous hostname. Now close this file (CTRL+X...) and
+save changes (...press &quot;y&quot; and Enter). New hostname will be
+set after next reboot.</font></p>
+<p><font face="DejaVu Sans Condensed, sans-serif"><i><b>$ reboot</b></i></font></p>
+<p><br/>
+<br/>
+
+</p>
+<h1 class="western"><font color="#990000">VNC Server Settings</font></h1>
+<p><font face="DejaVu Sans Condensed, sans-serif"><i><b>$ apt-get
+install tightvncserver</b></i></font></p>
+<p><font face="DejaVu Sans Condensed, sans-serif"><i><b>$ vncserver
+:1 -geometry 1280x800</b></i></font></p>
+<p><font face="DejaVu Sans Condensed, sans-serif"><i><b>$ vncpasswd
+(set smoptics)</b></i></font></p>
+<p><font face="DejaVu Sans Condensed, sans-serif">add vnc server as
+service</font></p>
+<p><font face="DejaVu Sans Condensed, sans-serif"><i><b>$ sudo nano
+/etc/init.d/vncboot </b></i><span style="font-variant: normal"><span style="font-style: normal"><span style="font-weight: normal">as
+new file and add the following lines:</span></span></span></font></p>
+<p style="font-variant: normal; font-style: normal; font-weight: normal">
+<font face="DejaVu Sans Condensed, sans-serif">-------------------------------------------------------------------------------------------------------</font></p>
+<p style="margin-left: 1.25cm"><font color="#3465a4"><font face="DejaVu Sans Condensed, sans-serif"><font size="2" style="font-size: 10pt">#
+Default-Start: 2 3 4 5</font></font></font></p>
+<p style="margin-left: 1.25cm"><font color="#3465a4"><font face="DejaVu Sans Condensed, sans-serif"><font size="2" style="font-size: 10pt">#
+Default-Stop: 0 1 6</font></font></font></p>
+<p style="margin-left: 1.25cm"><font color="#3465a4"><font face="DejaVu Sans Condensed, sans-serif"><font size="2" style="font-size: 10pt">#
+Short-Description: Start VNC Server at boot time</font></font></font></p>
+<p style="margin-left: 1.25cm"><font color="#3465a4"><font face="DejaVu Sans Condensed, sans-serif"><font size="2" style="font-size: 10pt">#
+Description: Start VNC Server at boot time.</font></font></font></p>
+<p style="margin-left: 1.25cm"><font color="#3465a4"><font face="DejaVu Sans Condensed, sans-serif"><font size="2" style="font-size: 10pt">###
+END INIT INFO</font></font></font></p>
+<p style="margin-left: 1.25cm"><br/>
+<br/>
+
+</p>
+<p style="margin-left: 1.25cm"><font color="#3465a4"><font face="DejaVu Sans Condensed, sans-serif"><font size="2" style="font-size: 10pt">USER=pi</font></font></font></p>
+<p style="margin-left: 1.25cm"><font color="#3465a4"><font face="DejaVu Sans Condensed, sans-serif"><font size="2" style="font-size: 10pt">HOME=/home/pi</font></font></font></p>
+<p style="margin-left: 1.25cm"><br/>
+<br/>
+
+</p>
+<p style="margin-left: 1.25cm"><font color="#3465a4"><font face="DejaVu Sans Condensed, sans-serif"><font size="2" style="font-size: 10pt">export
+USER HOME</font></font></font></p>
+<p style="margin-left: 1.25cm"><br/>
+<br/>
+
+</p>
+<p style="margin-left: 1.25cm"><font color="#3465a4"><font face="DejaVu Sans Condensed, sans-serif"><font size="2" style="font-size: 10pt">case
+&quot;$1&quot; in</font></font></font></p>
+<p style="margin-left: 1.25cm"><font color="#3465a4"><font face="DejaVu Sans Condensed, sans-serif"><font size="2" style="font-size: 10pt">start)</font></font></font></p>
+<p style="margin-left: 1.25cm"><font color="#3465a4"><font face="DejaVu Sans Condensed, sans-serif"><font size="2" style="font-size: 10pt">echo
+&quot;Starting VNC Server&quot;</font></font></font></p>
+<p style="margin-left: 1.25cm"><font color="#3465a4"><font face="DejaVu Sans Condensed, sans-serif"><font size="2" style="font-size: 10pt">#Insert
+your favoured settings for a VNC session</font></font></font></p>
+<p style="margin-left: 1.25cm"><font color="#3465a4"><font face="DejaVu Sans Condensed, sans-serif"><font size="2" style="font-size: 10pt">su
+- $USER -c &quot;/usr/bin/vncserver :1 -geometry 1280x800 &quot;</font></font></font></p>
+<p style="margin-left: 1.25cm"><font color="#3465a4"><font face="DejaVu Sans Condensed, sans-serif"><font size="2" style="font-size: 10pt">;;</font></font></font></p>
+<p style="margin-left: 1.25cm"><br/>
+<br/>
+
+</p>
+<p style="margin-left: 1.25cm"><font color="#3465a4"><font face="DejaVu Sans Condensed, sans-serif"><font size="2" style="font-size: 10pt">stop)</font></font></font></p>
+<p style="margin-left: 1.25cm"><font color="#3465a4"><font face="DejaVu Sans Condensed, sans-serif"><font size="2" style="font-size: 10pt">echo
+&quot;Stopping VNC Server&quot;</font></font></font></p>
+<p style="margin-left: 1.25cm"><font color="#3465a4"><font face="DejaVu Sans Condensed, sans-serif"><font size="2" style="font-size: 10pt">/usr/bin/vncserver
+-kill :1</font></font></font></p>
+<p style="margin-left: 1.25cm"><font color="#3465a4"><font face="DejaVu Sans Condensed, sans-serif"><font size="2" style="font-size: 10pt">;;</font></font></font></p>
+<p style="margin-left: 1.25cm"><br/>
+<br/>
+
+</p>
+<p style="margin-left: 1.25cm"><font color="#3465a4"><font face="DejaVu Sans Condensed, sans-serif"><font size="2" style="font-size: 10pt">*)</font></font></font></p>
+<p style="margin-left: 1.25cm"><font color="#3465a4"><font face="DejaVu Sans Condensed, sans-serif"><font size="2" style="font-size: 10pt">echo
+&quot;Usage: /etc/init.d/vncboot {start|stop}&quot;</font></font></font></p>
+<p style="margin-left: 1.25cm"><font color="#3465a4"><font face="DejaVu Sans Condensed, sans-serif"><font size="2" style="font-size: 10pt">exit
+1</font></font></font></p>
+<p style="margin-left: 1.25cm"><font color="#3465a4"><font face="DejaVu Sans Condensed, sans-serif"><font size="2" style="font-size: 10pt">;;</font></font></font></p>
+<p style="margin-left: 1.25cm"><font color="#3465a4"><font face="DejaVu Sans Condensed, sans-serif"><font size="2" style="font-size: 10pt">esac</font></font></font></p>
+<p style="margin-left: 1.25cm"><br/>
+<br/>
+
+</p>
+<p style="margin-left: 1.25cm"><font color="#3465a4"><font face="DejaVu Sans Condensed, sans-serif"><font size="2" style="font-size: 10pt">exit
+0</font></font></font></p>
+<p style="font-variant: normal; font-style: normal; font-weight: normal">
+<font face="DejaVu Sans Condensed, sans-serif"><font size="2" style="font-size: 10pt">-------------------------------------------------------------------------------------------------------</font></font></p>
+<p><font face="DejaVu Sans Condensed, sans-serif"><i><b>$ sudo chmod
++x /etc/init.d/vncboot</b></i></font></p>
+<p><font face="DejaVu Sans Condensed, sans-serif"><i><b>$ sudo
+systemctl enable vncboot</b></i></font></p>
+<p><font face="DejaVu Sans Condensed, sans-serif"><i><b>$ sudo
+service vncboot start|stop</b></i></font></p>
+<p><br/>
+<br/>
+
+</p>
+<h1 class="western"><font color="#990000">PROXY Settings</font></h1>
+<p><font face="DejaVu Sans Condensed, sans-serif"><i><b>$ sudo nano
+/etc/environment</b></i></font></p>
+<p style="font-variant: normal; font-style: normal; font-weight: normal">
+<font face="DejaVu Sans Condensed, sans-serif">- add lines:</font></p>
+<p style="margin-left: 1.25cm; font-variant: normal; font-style: normal; font-weight: normal">
+<font face="DejaVu Sans Condensed, sans-serif">export http_proxy
+&quot;http://135.245.192.7:8000&quot;;</font></p>
+<p style="margin-left: 1.25cm; font-variant: normal; font-style: normal; font-weight: normal">
+<font face="DejaVu Sans Condensed, sans-serif">export https_proxy
+&quot;https://135.245.192.7:8000&quot;;</font></p>
+<p><font face="DejaVu Sans Condensed, sans-serif"><i><b>$ sudo nano
+/etc/profile.d/proxy10.sh</b></i></font></p>
+<p style="font-variant: normal; font-style: normal; font-weight: normal">
+<font face="DejaVu Sans Condensed, sans-serif">- add lines</font></p>
+<p style="margin-left: 1.25cm; font-variant: normal; font-style: normal; font-weight: normal">
+<font face="DejaVu Sans Condensed, sans-serif">http_proxy=http://135.245.192.7:8000</font></p>
+<p style="margin-left: 1.25cm; font-variant: normal; font-style: normal; font-weight: normal">
+<font face="DejaVu Sans Condensed, sans-serif">https_proxy=http://135.245.192.7:8000</font></p>
+<p style="margin-left: 1.25cm; font-variant: normal; font-style: normal; font-weight: normal">
+<font face="DejaVu Sans Condensed, sans-serif">export http_proxy</font></p>
+<p style="margin-left: 1.25cm; font-variant: normal; font-style: normal; font-weight: normal">
+<font face="DejaVu Sans Condensed, sans-serif">export https_proxy</font></p>
+<p><font face="DejaVu Sans Condensed, sans-serif"><i><b>$ nano
+/home/pi/.bashrc</b></i></font></p>
+<p style="font-variant: normal; font-style: normal; font-weight: normal">
+<font face="DejaVu Sans Condensed, sans-serif">- add lines:</font></p>
+<p style="margin-left: 1.25cm; font-variant: normal; font-style: normal; font-weight: normal">
+<font face="DejaVu Sans Condensed, sans-serif">export
+http_proxy=&quot;http://135.245.192.7:8000&quot;</font></p>
+<p style="margin-left: 1.25cm; font-variant: normal; font-style: normal; font-weight: normal">
+<font face="DejaVu Sans Condensed, sans-serif">export
+https_proxy=&quot;https://135.245.192.7:8000&quot;</font></p>
+<p style="margin-left: 1.25cm; font-variant: normal; font-style: normal; font-weight: normal">
+<font face="DejaVu Sans Condensed, sans-serif">export
+ftp_proxy=&quot;http://135.245.192.7:8000&quot;</font></p>
+<p><font face="DejaVu Sans Condensed, sans-serif"><i><b>$ sudo nano
+/etc/apt/apt.conf.d</b></i></font></p>
+<p style="font-variant: normal; font-style: normal; font-weight: normal">
+<font face="DejaVu Sans Condensed, sans-serif">- add lines:</font></p>
+<p style="margin-left: 1.25cm; font-variant: normal; font-style: normal; font-weight: normal">
+<font face="DejaVu Sans Condensed, sans-serif">Acquire::http::Proxy
+&quot;http://135.245.192.7:8000&quot;;</font></p>
+<p style="margin-left: 1.25cm; font-variant: normal; font-style: normal; font-weight: normal">
+<font face="DejaVu Sans Condensed, sans-serif">Acquire::https::Proxy
+&quot;https://135.245.192.7:8000&quot;;</font></p>
+</body>
+</html>
