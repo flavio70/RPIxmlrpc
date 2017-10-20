@@ -53,7 +53,8 @@ def init_GPIO():
  
 	for i in pinList: 
 		GPIO.setup(i, GPIO.OUT, initial=PIN_OFF)
-	logger.info("...Initialized!!")		
+	logger.info("...Initialized!!")
+	time.sleep(5)
 
 
 
@@ -80,6 +81,7 @@ if __name__ == '__main__':
     for i in pinList:
             GPIO.setup(i, GPIO.OUT, initial=PIN_ON)        
     time.sleep(POLLING_TIME_ALL)
+    logger.info('\tSetting ALL Pin OFF ...'%(POLLING_TIME_ALL))
     for i in pinList:
             GPIO.setup(i, GPIO.OUT, initial=PIN_OFF)
 
