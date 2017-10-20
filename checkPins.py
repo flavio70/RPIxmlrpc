@@ -75,13 +75,14 @@ if __name__ == '__main__':
             time.sleep(POLLING_TIME)
             GPIO.setup(i, GPIO.OUT, initial=PIN_OFF)
             logger.info('\t...Done!!!\n')
+            time.sleep(1)
             
     time.sleep(2)
     logger.info('\tChecking ALL Pin ON for %i secs...'%(POLLING_TIME_ALL))
     for i in pinList:
             GPIO.setup(i, GPIO.OUT, initial=PIN_ON)        
     time.sleep(POLLING_TIME_ALL)
-    logger.info('\tSetting ALL Pin OFF ...'%(POLLING_TIME_ALL))
+    logger.info('\tSetting ALL Pin OFF ...')
     for i in pinList:
             GPIO.setup(i, GPIO.OUT, initial=PIN_OFF)
 
