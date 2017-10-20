@@ -66,6 +66,9 @@ if __name__ == '__main__':
     init_GPIO()
 
     logger.info('Testing GPIO Functionality...')
+    logger.info('Stopping servergpio service...')
+    os.system("sudo service servergpio stop")
+    time.sleep(1)
 
 
 
@@ -86,6 +89,11 @@ if __name__ == '__main__':
     for i in pinList:
             GPIO.setup(i, GPIO.OUT, initial=PIN_OFF)
 
-    
+    time.sleep(5)
+    logger.info('Restarting servergpio service...')
+
+    os.system("sudo service servergpio start")
+    time.sleep(5)
+
     logger.info('End of Execution')
 
