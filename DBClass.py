@@ -330,4 +330,38 @@ class rpiDB(object):
                         logger.error(ANSI_fail('DBClass.update_month_pin_stats\n%s'%str(inst)))
                         return res
                         conn.close()
+
+
+
+	def update_keep_alive(self,rpi):
+                '''update statistics for current rpi
+                :param str rpi: Raspberry IP address
+
+                                :returns: True/False
+                :rtype: bool
+                :raises: Exception
+
+                >>> DB1.update_keep_alive('10.10.20.1')
+                
+                '''
+                res=False
+                try:
+                        conn=self._connect()
+                        cursor=conn.cursor()
+                        querystr="insert into T_RPI_KEEP_ALIVE (select id_equipment,null from T_EQUIPMENT join T_POWER_MNGMT on(T_EQUIPMENT_id_equipment=id_equipment) join T_NET using(T_EQUIPMENT_id_equipment) where ip='"+rpi+"' group by ip) on duplicate key update keep_alive=null"
+                        cursor.execute(querystr)
+                        conn.commit()
+                        conn.close()
+                        logger.info('Updated keep Alive for RPI %s.'%(rpi))
+                        res=True
+                        return res
+                except Exception as inst:
+                        logger.error(ANSI_fail('DBClass.update_keep_alive'))
+                        return res
+                        conn.close()
+ 
+
+
+
+
                 
