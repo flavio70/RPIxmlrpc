@@ -249,7 +249,9 @@ if __name__ == '__main__':
                 init_GPIO()
                 
         logger.info(ANSI_info('################## Start new event polling cycle...#####################\n'))
-    
+
+        #update keep Alive table 
+        hostDB.update_keep_alive(hostip)    
 
         #getting event list 
         evl=hostDB.get_events(hostip)
