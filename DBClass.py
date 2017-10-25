@@ -336,8 +336,7 @@ class rpiDB(object):
 	def update_keep_alive(self,rpi):
                 '''update statistics for current rpi
                 :param str rpi: Raspberry IP address
-
-                                :returns: True/False
+                :returns: True/False
                 :rtype: bool
                 :raises: Exception
 

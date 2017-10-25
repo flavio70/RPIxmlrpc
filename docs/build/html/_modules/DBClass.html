@@ -92,8 +92,12 @@
 		<span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">DATABASE</span><span class="p">[</span><span class="s1">&#39;NAME&#39;</span><span class="p">]</span>
 
 	<span class="k">def</span> <span class="nf">_connect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-		<span class="k">return</span> <span class="n">mysql</span><span class="o">.</span><span class="n">connector</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_username</span><span class="p">,</span><span class="n">password</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_password</span><span class="p">,</span><span class="n">host</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,</span><span class="n">database</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span><span class="n">port</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_port</span><span class="p">)</span>
-
+                <span class="k">try</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="n">mysql</span><span class="o">.</span><span class="n">connector</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_username</span><span class="p">,</span><span class="n">password</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_password</span><span class="p">,</span><span class="n">host</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,</span><span class="n">database</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span><span class="n">port</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_port</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">inst</span><span class="p">:</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">ANSI_fail</span><span class="p">(</span><span class="s1">&#39;DBClass._connect</span><span class="se">\n</span><span class="si">%s</span><span class="s1">&#39;</span><span class="o">%</span><span class="nb">str</span><span class="p">(</span><span class="n">inst</span><span class="p">)))</span>
+                        <span class="k">return</span> <span class="kc">False</span>
+                        
 
 
 <div class="viewcode-block" id="rpiDB.set_pin_status"><a class="viewcode-back" href="../DBAPI.html#DBClass.rpiDB.set_pin_status">[docs]</a>	<span class="k">def</span> <span class="nf">set_pin_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">rpi</span><span class="p">,</span><span class="n">pin</span><span class="p">,</span><span class="n">value</span><span class="p">,</span><span class="n">user</span><span class="o">=</span><span class="s1">&#39;RPI&#39;</span><span class="p">,</span><span class="n">operation</span><span class="o">=</span><span class="s1">&#39;Manual&#39;</span><span class="p">):</span>
@@ -146,18 +150,21 @@
                 <span class="k">try</span><span class="p">:</span>
                         <span class="n">res</span><span class="o">=-</span><span class="mi">1</span>
                         <span class="n">conn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span>
-                        <span class="n">cursor</span><span class="o">=</span><span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
-                        <span class="n">querystr</span><span class="o">=</span><span class="s2">&quot;select power_status from T_POWER_STATUS join T_POWER_MNGMT on (T_POWER_MNGMT_id_powerMngmt=id_powerMngmt) join T_NET using(T_EQUIPMENT_id_equipment) where ip=&#39;&quot;</span><span class="o">+</span><span class="n">rpi</span><span class="o">+</span><span class="s2">&quot;&#39; and pin=&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">pin</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot; order by last_change desc limit 1;&quot;</span>
-                        <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">querystr</span><span class="p">)</span>
-                        <span class="n">queryres</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
-                        <span class="n">res</span><span class="o">=</span><span class="n">queryres</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-                        <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-                        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Current DB status for pin </span><span class="si">%i</span><span class="s1"> : </span><span class="si">%i</span><span class="s1">&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">pin</span><span class="p">,</span><span class="n">res</span><span class="p">))</span>
-
-                        <span class="k">return</span> <span class="n">res</span>
+                        <span class="k">if</span> <span class="n">conn</span><span class="p">:</span>
+                                <span class="n">cursor</span><span class="o">=</span><span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+                                <span class="n">querystr</span><span class="o">=</span><span class="s2">&quot;select power_status from T_POWER_STATUS join T_POWER_MNGMT on (T_POWER_MNGMT_id_powerMngmt=id_powerMngmt) join T_NET using(T_EQUIPMENT_id_equipment) where ip=&#39;&quot;</span><span class="o">+</span><span class="n">rpi</span><span class="o">+</span><span class="s2">&quot;&#39; and pin=&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">pin</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot; order by last_change desc limit 1;&quot;</span>
+                                <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">querystr</span><span class="p">)</span>
+                                <span class="n">queryres</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+                                <span class="n">res</span><span class="o">=</span><span class="n">queryres</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                                <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+                                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Current DB status for pin </span><span class="si">%i</span><span class="s1"> : </span><span class="si">%i</span><span class="s1">&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">pin</span><span class="p">,</span><span class="n">res</span><span class="p">))</span>
+                                <span class="k">return</span> <span class="n">res</span>
+                        <span class="k">else</span><span class="p">:</span>
+                                <span class="k">return</span> <span class="o">-</span><span class="mi">2</span>
+                        
 
                 <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">inst</span><span class="p">:</span>
-                        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">ANSI_fail</span><span class="p">(</span><span class="s1">&#39;DBClass.get_pin_status</span><span class="se">\n</span><span class="si">%s</span><span class="s1">&#39;</span><span class="o">%</span><span class="nb">str</span><span class="p">(</span><span class="n">inst</span><span class="p">)))</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">ANSI_fail</span><span class="p">(</span><span class="s1">&#39;DBClass.get_pin_status for pin </span><span class="si">%i</span><span class="se">\n</span><span class="si">%s</span><span class="s1">&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">pin</span><span class="p">,</span><span class="nb">str</span><span class="p">(</span><span class="n">inst</span><span class="p">))))</span>
                         <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
                         <span class="k">return</span> <span class="o">-</span><span class="mi">1</span></div>
 
@@ -361,7 +368,8 @@
                 <span class="k">try</span><span class="p">:</span>
                         <span class="n">conn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span>
                         <span class="n">cursor</span><span class="o">=</span><span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
-                        <span class="n">querystr</span><span class="o">=</span><span class="s2">&quot;insert into T_POWER_USAGE (select null,concat(year(now()),&#39;-&#39;,month(now())) as time_frame,T_POWER_MNGMT_id_powerMngmt,0 from T_POWER_MNGMT join T_POWER_STATUS on(id_powerMngmt=T_POWER_MNGMT_id_powerMngmt) join T_NET using(T_EQUIPMENT_id_equipment) where ip=&#39;&quot;</span><span class="o">+</span><span class="n">rpi</span><span class="o">+</span><span class="s2">&quot;&#39; and pin=&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">pin</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot; order by last_change desc limit 1) on duplicate key update hour_counter=hour_counter+&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">update_time</span><span class="p">)</span>
+                        <span class="c1">#querystr=&quot;insert into T_POWER_USAGE (select null,concat(year(now()),&#39;-&#39;,month(now())) as time_frame,T_POWER_MNGMT_id_powerMngmt,0 from T_POWER_MNGMT join T_POWER_STATUS on(id_powerMngmt=T_POWER_MNGMT_id_powerMngmt) join T_NET using(T_EQUIPMENT_id_equipment) where ip=&#39;&quot;+rpi+&quot;&#39; and pin=&quot;+str(pin)+&quot; order by last_change desc limit 1) on duplicate key update hour_counter=hour_counter+&quot;+str(update_time)</span>
+                        <span class="n">querystr</span><span class="o">=</span><span class="s2">&quot;insert into T_POWER_USAGE (select null,year(now()) as year_frame,T_POWER_MNGMT_id_powerMngmt,0,month(now()) as month_frame from T_POWER_MNGMT join T_POWER_STATUS on(id_powerMngmt=T_POWER_MNGMT_id_powerMngmt) join T_NET using(T_EQUIPMENT_id_equipment) where ip=&#39;&quot;</span><span class="o">+</span><span class="n">rpi</span><span class="o">+</span><span class="s2">&quot;&#39; and pin=&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">pin</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot; order by last_change desc limit 1) on duplicate key update hour_counter=hour_counter+&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">update_time</span><span class="p">)</span>
                         <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">querystr</span><span class="p">)</span>
                         <span class="n">conn</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
                         <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
@@ -371,7 +379,40 @@
                 <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">inst</span><span class="p">:</span>
                         <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">ANSI_fail</span><span class="p">(</span><span class="s1">&#39;DBClass.update_month_pin_stats</span><span class="se">\n</span><span class="si">%s</span><span class="s1">&#39;</span><span class="o">%</span><span class="nb">str</span><span class="p">(</span><span class="n">inst</span><span class="p">)))</span>
                         <span class="k">return</span> <span class="n">res</span>
+                        <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="rpiDB.update_keep_alive"><a class="viewcode-back" href="../DBAPI.html#DBClass.rpiDB.update_keep_alive">[docs]</a>	<span class="k">def</span> <span class="nf">update_keep_alive</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">rpi</span><span class="p">):</span>
+                <span class="sd">&#39;&#39;&#39;update statistics for current rpi</span>
+<span class="sd">                :param str rpi: Raspberry IP address</span>
+<span class="sd">                :returns: True/False</span>
+<span class="sd">                :rtype: bool</span>
+<span class="sd">                :raises: Exception</span>
+
+<span class="sd">                &gt;&gt;&gt; DB1.update_keep_alive(&#39;10.10.20.1&#39;)</span>
+<span class="sd">                </span>
+<span class="sd">                &#39;&#39;&#39;</span>
+                <span class="n">res</span><span class="o">=</span><span class="kc">False</span>
+                <span class="k">try</span><span class="p">:</span>
+                        <span class="n">conn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span>
+                        <span class="n">cursor</span><span class="o">=</span><span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+                        <span class="n">querystr</span><span class="o">=</span><span class="s2">&quot;insert into T_RPI_KEEP_ALIVE (select id_equipment,null from T_EQUIPMENT join T_POWER_MNGMT on(T_EQUIPMENT_id_equipment=id_equipment) join T_NET using(T_EQUIPMENT_id_equipment) where ip=&#39;&quot;</span><span class="o">+</span><span class="n">rpi</span><span class="o">+</span><span class="s2">&quot;&#39; group by ip) on duplicate key update keep_alive=null&quot;</span>
+                        <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">querystr</span><span class="p">)</span>
+                        <span class="n">conn</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+                        <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Updated keep Alive for RPI </span><span class="si">%s</span><span class="s1">.&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">rpi</span><span class="p">))</span>
+                        <span class="n">res</span><span class="o">=</span><span class="kc">True</span>
+                        <span class="k">return</span> <span class="n">res</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">inst</span><span class="p">:</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">ANSI_fail</span><span class="p">(</span><span class="s1">&#39;DBClass.update_keep_alive&#39;</span><span class="p">))</span>
+                        <span class="k">return</span> <span class="n">res</span>
                         <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div></div>
+ 
+
+
+
+
                 
 </pre></div>
 
