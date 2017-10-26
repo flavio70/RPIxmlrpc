@@ -45,6 +45,10 @@ if __name__ == '__main__':
                                 logger.info('Restarting servergpio service...')
                                 s.sendline('sudo service servergpio restart')
                                 while not s.prompt():time.sleep(1)
+                                time.sleep(1)
+                                s.sendline('sudo service servergpio status')
+                                while not s.prompt():time.sleep(1)
+                                logger.info(s.before.decode("utf-8"))
                                 logger.info('Done!!')
                                 
                                 s.logout()
