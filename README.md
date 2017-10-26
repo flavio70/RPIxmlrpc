@@ -8,7 +8,7 @@ Installation
 
 	>sudo apt-get update
 
-	>sudo apt-get install python3-mysql.connector
+	>sudo apt-get install python3-mysql.connector python3-pexpect
 
 
 2. #### Create the /srv folder
