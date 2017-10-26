@@ -23,6 +23,7 @@ DAEMON='/srv/xmlrpc/servergpio.py &'
 PIDFILE=/var/run/servergpio.pid
 SCRIPTNAME=/etc/init.d/"$NAME"
 RUNAS1=root
+VERSION=/srv/xmlrpc/version.py
 
 test -f $SCRIPT || exit 0
 
@@ -58,8 +59,11 @@ case "$1" in
     status)
         status_of_proc -p "$PIDFILE" "$NAME" && exit 0 || exit $?
         ;;
+    info)
+        exec $VERSION
+        ;;
     *)
-        echo "Usage: $SCRIPTNAME {start|stop|restart|status}" >&2
+        echo "Usage: $SCRIPTNAME {start|stop|restart|status|info}" >&2
         exit 1
         ;;
 esac
