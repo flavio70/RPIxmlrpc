@@ -4,7 +4,7 @@ Installation
 - **Downoad the require python packages**::
 
 	sudo apt-get update
-	sudo apt-get install python3-mysql.connector
+	sudo apt-get install python3-mysql.connector python3-pexpect
 
 
 - **Create the /srv folder**::
