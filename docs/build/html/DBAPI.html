@@ -50,8 +50,54 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="module-DBClass">
-<span id="db-access-apis-documentation"></span><h1>DB Access APIs Documentation<a class="headerlink" href="#module-DBClass" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="db-access-apis-documentation">
+<h1>DB Access APIs Documentation<a class="headerlink" href="#db-access-apis-documentation" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="db-schema-configuration">
+<h2>DB Schema Configuration<a class="headerlink" href="#db-schema-configuration" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p class="first"><strong>T_LOCATION Entries</strong>:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">be</span> <span class="n">sure</span> <span class="nb">all</span> <span class="n">locations</span> <span class="n">you</span> <span class="n">need</span> <span class="n">to</span> <span class="n">control</span> <span class="n">are</span> <span class="n">present</span>
+<span class="n">id_location</span><span class="o">|</span><span class="n">site</span><span class="o">|</span><span class="n">room</span><span class="o">|</span><span class="n">row</span><span class="o">|</span><span class="n">rack</span><span class="o">|</span><span class="n">pos</span> <span class="p">(</span><span class="n">where</span> <span class="n">pos</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first"><strong>T_EQUIPMENT Entries</strong>:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">be</span> <span class="n">sure</span> <span class="nb">all</span> <span class="n">RPI</span> <span class="n">are</span> <span class="n">registered</span> <span class="n">into</span> <span class="n">this</span> <span class="n">table</span> <span class="n">using</span> <span class="n">location</span> <span class="n">rack</span><span class="o">=</span><span class="mi">0</span> <span class="ow">and</span> <span class="n">pos</span><span class="o">=</span><span class="mi">0</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first"><strong>T_POWER_MNGMT Entries</strong>:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">You</span> <span class="n">need</span> <span class="n">one</span> <span class="n">entry</span> <span class="k">for</span> <span class="n">each</span> <span class="n">pin</span> <span class="n">you</span> <span class="n">need</span> <span class="n">to</span> <span class="n">control</span> <span class="n">i</span><span class="o">.</span><span class="n">e</span><span class="o">.</span>
+<span class="n">id_powerMngmt</span><span class="o">|</span><span class="n">T_EQUIPMENT_id_equipment</span><span class="o">|</span><span class="n">pin</span><span class="o">|</span><span class="n">T_LOCATION_id_location</span><span class="o">|</span><span class="n">owner</span>
+     <span class="mi">1</span>       <span class="o">|</span>   <span class="mi">10003</span>                <span class="o">|</span> <span class="mi">2</span> <span class="o">|</span>      <span class="mi">100069</span>          <span class="o">|</span> <span class="n">user1</span>
+
+<span class="n">T_EQUIPMENT_id_equipment</span> <span class="o">--&gt;</span> <span class="n">reference</span> <span class="n">to</span> <span class="n">RPI</span> <span class="nb">id</span> <span class="n">into</span> <span class="n">T_EQUIPMENT</span> <span class="n">table</span>
+<span class="n">T_LOCATION_id_location</span>   <span class="o">--&gt;</span> <span class="n">reference</span> <span class="n">to</span> <span class="n">location</span> <span class="n">we</span> <span class="n">need</span> <span class="n">to</span> <span class="n">control</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first"><strong>T_POWER_STATUS Entries</strong>:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">You</span> <span class="n">need</span> <span class="n">one</span> <span class="n">initial</span> <span class="n">entry</span> <span class="k">for</span> <span class="n">each</span> <span class="n">pT_POWER_MNGMT</span> <span class="n">entry</span> <span class="n">i</span><span class="o">.</span><span class="n">e</span><span class="o">.</span>
+<span class="n">T_POWER_MNGMT_id_powerMngmt</span><span class="o">|</span><span class="n">power_status</span><span class="o">|</span><span class="n">last_change</span>          <span class="o">|</span><span class="n">modifier</span><span class="o">|</span><span class="n">remarks</span>                  <span class="o">|</span><span class="n">manual_status</span>
+     <span class="mi">1</span>                     <span class="o">|</span>     <span class="mi">1</span>      <span class="o">|</span> <span class="mi">2017</span><span class="o">-</span><span class="mi">10</span><span class="o">-</span><span class="mi">19</span> <span class="mi">15</span><span class="p">:</span><span class="mi">40</span><span class="p">:</span><span class="mi">00</span> <span class="o">|</span> <span class="n">ADMIN</span>  <span class="o">|</span><span class="n">Rack</span> <span class="n">Added</span> <span class="n">to</span> <span class="n">RPI</span> <span class="n">COntrol</span><span class="o">|</span>     <span class="mi">0</span>
+
+<span class="n">T_POWER_MNGMT_id_powerMngmt</span> <span class="o">--&gt;</span> <span class="n">reference</span> <span class="n">to</span> <span class="n">T_POWER_MNGMT</span> <span class="n">entry</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first"><strong>Other Tables entries</strong>:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">When</span> <span class="n">running</span> <span class="n">the</span> <span class="n">service</span> <span class="n">also</span> <span class="n">update</span> <span class="n">entries</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">following</span> <span class="n">DB</span> <span class="n">tables</span><span class="p">:</span>
+
+<span class="n">T_POWER_SCHEDULE</span>
+<span class="n">T_POWER_USAGE</span>
+<span class="n">T_RPI_KEEP_ALIVE</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="module-DBClass">
+<span id="remote-operations"></span><h2>Remote Operations<a class="headerlink" href="#module-DBClass" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="DBClass.rpiDB">
 <em class="property">class </em><code class="descclassname">DBClass.</code><code class="descname">rpiDB</code><a class="reference internal" href="_modules/DBClass.html#rpiDB"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#DBClass.rpiDB" title="Permalink to this definition">¶</a></dt>
@@ -294,6 +340,7 @@ belonging to pin and havin busy value
 </dd></dl>
 
 </div>
+</div>
 
 
           </div>
@@ -301,6 +348,15 @@ belonging to pin and havin busy value
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">DB Access APIs Documentation</a><ul>
+<li><a class="reference internal" href="#db-schema-configuration">DB Schema Configuration</a></li>
+<li><a class="reference internal" href="#module-DBClass">Remote Operations</a></li>
+</ul>
+</li>
+</ul>
+
   <h4>Previous topic</h4>
   <p class="topless"><a href="rpcAPI.html"
                         title="previous chapter">XMLRPC Server Usage</a></p>
