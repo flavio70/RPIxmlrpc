@@ -254,6 +254,19 @@ belonging to pin and havin busy value
 </dd></dl>
 
 <dl class="method">
+<dt id="DBClass.rpiDB.update_keep_alive">
+<code class="descname">update_keep_alive</code><span class="sig-paren">(</span><em>rpi</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/DBClass.html#rpiDB.update_keep_alive"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#DBClass.rpiDB.update_keep_alive" title="Permalink to this definition">¶</a></dt>
+<dd><p>update statistics for current rpi
+:param str rpi: Raspberry IP address
+:returns: True/False
+:rtype: bool
+:raises: Exception</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">DB1</span><span class="o">.</span><span class="n">update_keep_alive</span><span class="p">(</span><span class="s1">&#39;10.10.20.1&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
 <dt id="DBClass.rpiDB.update_month_pin_counters">
 <code class="descname">update_month_pin_counters</code><span class="sig-paren">(</span><em>rpi</em>, <em>pin</em>, <em>update_time</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/DBClass.html#rpiDB.update_month_pin_counters"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#DBClass.rpiDB.update_month_pin_counters" title="Permalink to this definition">¶</a></dt>
 <dd><p>update statistics for current rpi and selected pin

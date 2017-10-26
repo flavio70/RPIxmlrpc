@@ -70,15 +70,15 @@
 <span class="c1">#polling time (sec.) used for event polling</span>
 
 <span class="n">POLLING_TIME</span><span class="o">=</span><span class="mi">60</span>
-<span class="n">PIN_ON</span><span class="o">=</span><span class="n">GPIO</span><span class="o">.</span><span class="n">LOW</span>
-<span class="n">PIN_OFF</span><span class="o">=</span><span class="n">GPIO</span><span class="o">.</span><span class="n">HIGH</span>
+<span class="n">PIN_ON</span><span class="o">=</span><span class="n">GPIO</span><span class="o">.</span><span class="n">HIGH</span>
+<span class="n">PIN_OFF</span><span class="o">=</span><span class="n">GPIO</span><span class="o">.</span><span class="n">LOW</span>
 
 <span class="n">BASE_DIR</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
 
 <span class="c1"># init DB instance for current host</span>
 
 <span class="n">hostDB</span><span class="o">=</span><span class="n">rpiDB</span><span class="p">()</span>
-
+<span class="n">DBConnFlag</span><span class="o">=</span><span class="kc">True</span>
 
 <span class="c1"># init logging</span>
 
@@ -88,7 +88,7 @@
 
 <span class="n">hostip</span><span class="o">=</span><span class="s1">&#39;&#39;</span>
 <span class="c1"># init list with pin numbers</span>
-<span class="n">pinList</span> <span class="o">=</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">17</span><span class="p">,</span> <span class="mi">18</span><span class="p">,</span> <span class="mi">19</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">21</span><span class="p">,</span> <span class="mi">22</span><span class="p">,</span> <span class="mi">23</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">26</span><span class="p">]</span>
+<span class="n">pinList</span> <span class="o">=</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">17</span><span class="p">]</span>
 <span class="c1"># init list with managed pin</span>
 <span class="n">managedPinList</span> <span class="o">=</span> <span class="p">[]</span>
 
@@ -119,6 +119,7 @@
 	<span class="k">global</span> <span class="n">managedPinList</span>
 	<span class="k">global</span> <span class="n">hostip</span>
 	<span class="k">global</span> <span class="n">hostDB</span>
+	<span class="k">global</span> <span class="n">DBConnFlag</span>
 	<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">ANSI_info</span><span class="p">(</span><span class="s2">&quot;Initializing GPIOs...&quot;</span><span class="p">))</span>
 	<span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">ANSI_info</span><span class="p">(</span><span class="s2">&quot;Initializing GPIOs...&quot;</span><span class="p">))</span>
 	<span class="n">GPIO</span><span class="o">.</span><span class="n">setwarnings</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
@@ -129,8 +130,14 @@
 	<span class="c1"># according to value stored into DB</span>
  
 	<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">pinList</span><span class="p">:</span> 
-		<span class="n">GPIO</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">GPIO</span><span class="o">.</span><span class="n">OUT</span><span class="p">,</span> <span class="n">initial</span><span class="o">=</span><span class="n">PIN_OFF</span><span class="p">)</span>
+		<span class="n">GPIO</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">GPIO</span><span class="o">.</span><span class="n">OUT</span><span class="p">,</span> <span class="n">initial</span><span class="o">=</span><span class="n">PIN_ON</span><span class="p">)</span>
 		<span class="n">statusDB</span><span class="o">=</span><span class="n">hostDB</span><span class="o">.</span><span class="n">get_pin_status</span><span class="p">(</span><span class="n">hostip</span><span class="p">,</span><span class="n">i</span><span class="p">)</span>
+		<span class="k">if</span> <span class="n">statusDB</span> <span class="o">==</span> <span class="o">-</span><span class="mi">2</span><span class="p">:</span>
+                        <span class="c1">#GPIO.output(i, PIN_ON)</span>
+                        <span class="n">DBConnFlag</span><span class="o">=</span><span class="kc">False</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;DB Connection Not available&#39;</span><span class="p">)</span>
+		<span class="k">else</span><span class="p">:</span>
+                        <span class="n">DBConnFlag</span><span class="o">=</span><span class="kc">True</span>
 
 		<span class="k">if</span> <span class="n">statusDB</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
                         <span class="n">GPIO</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">PIN_ON</span><span class="p">)</span>
@@ -177,23 +184,23 @@
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Previous status for pinList </span><span class="si">%s</span><span class="s1"> = </span><span class="si">%s</span><span class="s1">&#39;</span><span class="o">%</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">managedPinList</span><span class="p">),</span><span class="nb">str</span><span class="p">(</span><span class="n">prePinStatusList</span><span class="p">)))</span>
         <span class="c1">#get current status</span>
         <span class="n">currentPinStatusList</span><span class="o">=</span><span class="n">get_GPIO_status</span><span class="p">(</span><span class="n">managedPinList</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">managedPinList</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">managedPinList</span><span class="p">)):</span>
                 <span class="n">currentPin</span><span class="o">=</span><span class="n">managedPinList</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
                 <span class="n">prePinStatus</span><span class="o">=</span><span class="n">prePinStatusList</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
                 <span class="n">currentPinStatus</span><span class="o">=</span><span class="n">currentPinStatusList</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
                 <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">Current pin: </span><span class="si">%i</span><span class="s1">. CurrentValue: </span><span class="si">%i</span><span class="s1">, OldValue: </span><span class="si">%i</span><span class="s1">&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">currentPin</span><span class="p">,</span><span class="n">currentPinStatus</span><span class="p">,</span><span class="n">prePinStatus</span><span class="p">))</span>
 
-                <span class="k">if</span> <span class="n">prePinStatus</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">currentPinStatus</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                        <span class="c1">#pin passed from ON to OFF</span>
+                <span class="k">if</span> <span class="n">prePinStatus</span> <span class="o">==</span> <span class="n">PIN_OFF</span> <span class="ow">and</span> <span class="n">currentPinStatus</span> <span class="o">==</span> <span class="n">PIN_ON</span><span class="p">:</span>
+                        <span class="c1">#pin passed from OFF to ON</span>
                         <span class="c1">#we have to update the off counters for this pin</span>
-                        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">Updating time ticks for Current pin: </span><span class="si">%i</span><span class="s1"> set to OFF in this current polling time...&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">currentPin</span><span class="p">))</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">Updating time ticks for Current pin: </span><span class="si">%i</span><span class="s1"> set to ON in this current polling time...&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">currentPin</span><span class="p">))</span>
                         <span class="n">hostDB</span><span class="o">.</span><span class="n">update_month_pin_counters</span><span class="p">(</span><span class="n">hostip</span><span class="p">,</span><span class="n">managedPinList</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">POLLING_TIME</span><span class="p">)</span>
-                <span class="k">elif</span> <span class="n">prePinStatus</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">currentPinStatus</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                        <span class="c1">#pin still OFF from previous polling preiod</span>
+                <span class="k">elif</span> <span class="n">prePinStatus</span> <span class="o">==</span> <span class="n">PIN_ON</span> <span class="ow">and</span> <span class="n">currentPinStatus</span> <span class="o">==</span> <span class="n">PIN_ON</span><span class="p">:</span>
+                        <span class="c1">#pin still ON from previous polling period</span>
                         <span class="c1">#we have to update the off counters for this pin</span>
-                        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">Updating time ticks for Current pin: </span><span class="si">%i</span><span class="s1"> Still OFF in this current polling time...&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">currentPin</span><span class="p">))</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">Updating time ticks for Current pin: </span><span class="si">%i</span><span class="s1"> Still ON in this current polling time...&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">currentPin</span><span class="p">))</span>
                         <span class="n">hostDB</span><span class="o">.</span><span class="n">update_month_pin_counters</span><span class="p">(</span><span class="n">hostip</span><span class="p">,</span><span class="n">managedPinList</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">POLLING_TIME</span><span class="p">)</span>
-                <span class="k">else</span><span class="p">:</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">Current pin: </span><span class="si">%i</span><span class="s1"> set to ON. Skipping time ticks update...&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">currentPin</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">Current pin: </span><span class="si">%i</span><span class="s1"> set to OFF. Skipping time ticks update...&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">currentPin</span><span class="p">))</span>
                         
 
 
@@ -286,9 +293,15 @@
 
 
 
-    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>           
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">DBConnFlag</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">ANSI_warning</span><span class="p">(</span><span class="s1">&#39;DB was not available when start...Trying to reinit...&#39;</span><span class="p">))</span>
+                <span class="n">init_GPIO</span><span class="p">()</span>
+                
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">ANSI_info</span><span class="p">(</span><span class="s1">&#39;################## Start new event polling cycle...#####################</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">))</span>
-    
+
+        <span class="c1">#update keep Alive table </span>
+        <span class="n">hostDB</span><span class="o">.</span><span class="n">update_keep_alive</span><span class="p">(</span><span class="n">hostip</span><span class="p">)</span>    
 
         <span class="c1">#getting event list </span>
         <span class="n">evl</span><span class="o">=</span><span class="n">hostDB</span><span class="o">.</span><span class="n">get_events</span><span class="p">(</span><span class="n">hostip</span><span class="p">)</span>
