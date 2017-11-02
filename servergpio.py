@@ -166,7 +166,7 @@ class ServerFuncts:
                 #implement this method so that system.listMethods
                 #knows to advertise the string methods
                 logger.info('serving listMethods funct ...')
-                return ['checkServer','setGPIO']
+                return ['checkServer','setGPIO','getGPIOStatus']
 
         def checkServer(self):
                 ''' check XMLRPC server service status
@@ -180,6 +180,22 @@ class ServerFuncts:
                 logger.info ("serving checkServer funct...XMLRPC Server from %s" %hostip)		
                 return json.dumps("XMLRPC Server from %s" %hostip)
 
+        def getGPIOStatus(self):
+                ''' get current PIN Status
+                :returns: string
+                :rtype: json
+
+
+                '''
+                global managedPinList
+                logger.info ("serving getGPIOStatus XMLRPC funct...")
+                #get current status
+                currentPinStatusList=get_GPIO_status(managedPinList)
+                #for i in range(0,len(managedPinList)):
+                #        currentPin=managedPinList[i]
+                #        prePinStatus=prePinStatusList[i]
+                #        currentPinStatus=currentPinStatusList[i]
+                return json.dumps(currentPinStatusList)
 
 
         def setGPIO(self,gpio):
