@@ -302,7 +302,7 @@ class rpiDB(object):
 
 
 	def update_month_pin_counters(self,rpi,pin,update_time):
-                '''update statistics for current rpi and selected pin
+                '''update month statistics for current rpi and selected pin
                 :param str rpi: Raspberry IP address
                 :param str pin: Raspberry pin id
 
@@ -330,6 +330,42 @@ class rpiDB(object):
                         logger.error(ANSI_fail('DBClass.update_month_pin_stats\n%s'%str(inst)))
                         return res
                         conn.close()
+
+
+
+	def update_week_pin_counters(self,rpi,pin,update_time):
+                '''update weekly statistics for current rpi and selected pin
+                :param str rpi: Raspberry IP address
+                :param str pin: Raspberry pin id
+
+                :param str update_time: time ticks to be added to current counters
+                :returns: True/False
+                :rtype: bool
+                :raises: Exception
+
+                >>> DB1.update_week_pin_stats('10.10.20.1','15','12','1')
+                
+                '''
+                res=False
+                try:
+                        conn=self._connect()
+                        cursor=conn.cursor()
+                        querystr="insert into T_POWER_USAGE_WEEK (select null,year(now()) as year_frame,T_POWER_MNGMT_id_powerMngmt,0,week(now()) as week_frame from T_POWER_MNGMT join T_POWER_STATUS on(id_powerMngmt=T_POWER_MNGMT_id_powerMngmt) join T_NET using(T_EQUIPMENT_id_equipment) where ip='"+rpi+"' and pin="+str(pin)+" order by last_change desc limit 1) on duplicate key update hour_counter=hour_counter+"+str(update_time)
+                        cursor.execute(querystr)
+                        conn.commit()
+                        conn.close()
+                        logger.info('Updated weekly counters for RPI %s pin %s by %s ticks.'%(rpi,str(pin),str(update_time)))
+                        res=True
+                        return res
+                except Exception as inst:
+                        logger.error(ANSI_fail('DBClass.update_week_pin_stats\n%s'%str(inst)))
+                        return res
+                        conn.close()
+
+
+
+
+
 
 
 
