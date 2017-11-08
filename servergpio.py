@@ -281,6 +281,12 @@ if __name__ == '__main__':
             ev_id=int(ev['id'])
             ev_pin=int(ev['pin'])
             ev_interval=int(ev['interval'])
+            if int(ev['enabled']) == 0:
+                    ev_enabled = False
+                    ev_enabled_str = 'event Disabled by User'
+            else:
+                    ev_enabled = True
+                    ev_enabled_str = ''
             now=datetime.now()
             to_be_served= False
             set_pin_on = False
@@ -301,11 +307,18 @@ if __name__ == '__main__':
                     hostDB.update_event(ev_id,start_time.strftime('%Y-%m-%d %H:%M:%S'),stop_time.strftime('%Y-%m-%d %H:%M:%S'),1)
                     #now check if pin has been set in manual mode
                     logger.info('Checking pin %i status...'%ev_pin)
-                    if not hostDB.check_pin_mode(hostip,ev_pin):
-                            #pin set in auto mode
+                    if hostDB.check_pin_mode(hostip,ev_pin):
+                            pin_manual = True
+                            pin_manualstr = 'Set to Manual mode'
+                    else:
+                            pin_manual = False
+                            pin_manualstr = 'Set to Automatic mode'
+                            
+                    if (not pin_manual) and ev_enabled:
+                            #pin set in auto mode and event enabled by user
                             #we should set the pin OFF
                             set_pin_off = True
-                    else:logger.info(ANSI_info('PIN %i set in manual Mode. Skipping PIN management...'%ev_pin))
+                    else:logger.info(ANSI_warning('PIN %i %s %s. Skipping PIN management...'%(ev_pin,pin_manualstr,ev_enabled_str)))
 
             if now >= stop_time:
                     #in this case we have to update the event stop time in the DB
@@ -317,11 +330,19 @@ if __name__ == '__main__':
                     hostDB.update_event(ev_id,start_time.strftime('%Y-%m-%d %H:%M:%S'),stop_time.strftime('%Y-%m-%d %H:%M:%S'),0)
                     #now check if pin has been set in manual mode
                     logger.info('Checking pin %i status...'%ev_pin)
-                    if not hostDB.check_pin_mode(hostip,ev_pin):
+                    if hostDB.check_pin_mode(hostip,ev_pin):
+                            pin_manual = True
+                            pin_manualstr = 'Set to Manual mode'
+                    else:
+                            pin_manual = False
+                            pin_manualstr = 'Set to Automatic mode'
+                    
+                    if (not pin_manual) and ev_enabled:
                             #pin set in auto mode
                             #we should set the pin ON 
                             set_pin_on = True
-                    else:logger.info(ANSI_warning('PIN %i set in manual Mode. Skipping PIN management...'%ev_pin))
+                    else:logger.info(ANSI_warning('PIN %i %s %s. Skipping PIN management...'%(ev_pin,pin_manualstr,ev_enabled_str)))
+
 
 
             if (set_pin_off and not set_pin_on):

@@ -128,7 +128,7 @@ class rpiDB(object):
 
                 :param str rpi: Raspberry IP address
                 :param int pin: Raspberry pin number
-                :param mode: pin mode to be checked(0,1) 0 for Automatic, 0 for Manual 
+                :param mode: pin mode to be checked(0,1) 0 for Manual, 1 for Automatic 
                 :type mode: str or None
                 :returns: bool.
                 :raises: Exception
@@ -140,9 +140,9 @@ class rpiDB(object):
 
 
                 res=False
-                res_str='False'
-                mode_str='Automatic'
-                if mode != 0: mode_str='Manual'
+                
+                mode_str='Manual'
+                if mode != 0: mode_str='Automatic'
                 try:
                         conn=self._connect()
                         cursor=conn.cursor()
@@ -152,9 +152,9 @@ class rpiDB(object):
                         if len(queryres)==0:res=False
                         if queryres[0] == mode:
                                 res=True
-                                res_str='True'
+                                
                         conn.close()
-                        logger.info('Checking pinmode %i(%s) for pin %i ... %s'%(mode,mode_str,pin,res_str))
+                        logger.info('Checking pinmode %i(%s) for pin %i ...'%(mode,mode_str,pin))
                         return res
                 except Exception as inst:
                         logger.error(ANSI_fail('DBClass.check_pin_mode\n%s'%str(inst)))
@@ -181,13 +181,13 @@ class rpiDB(object):
                 try:
                         conn=self._connect()
                         cursor=conn.cursor()
-                        querystr="select idT_POWER_SCHEDULE,pin,start_time,stop_time,T_POWER_SCHEDULE.interval,busy from T_POWER_SCHEDULE join T_POWER_MNGMT on (T_POWER_MNGMT_id_powerMngmt=id_powerMngmt) join T_NET using(T_EQUIPMENT_id_equipment) where ip='"+rpi+"';"
+                        querystr="select idT_POWER_SCHEDULE,pin,start_time,stop_time,T_POWER_SCHEDULE.interval,busy,enabled from T_POWER_SCHEDULE join T_POWER_MNGMT on (T_POWER_MNGMT_id_powerMngmt=id_powerMngmt) join T_NET using(T_EQUIPMENT_id_equipment) where ip='"+rpi+"';"
                         cursor.execute(querystr)
                         queryres = cursor.fetchall()
                         conn.close()
                         logger.info('Getting Event list for RPI %s ...\n'%rpi)
                         for row in queryres:
-                            rdict={'id':row[0],'pin':row[1],'start_time':row[2],'stop_time':row[3],'interval':row[4],'busy':row[5]}
+                            rdict={'id':row[0],'pin':row[1],'start_time':row[2],'stop_time':row[3],'interval':row[4],'busy':row[5],'enabled':row[6]}
                             res.append(rdict)        
                             logger.info('Event %s'%rdict)
                         logger.info('...end of List\n')
