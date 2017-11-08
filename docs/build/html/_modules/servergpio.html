@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>servergpio &#8212; Raspberry GPIO xmlrpc 1.0 documentation</title>
+    <title>servergpio &#8212; Raspberry GPIO xmlrpc 1.1.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.0',
+        VERSION:     '1.1.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -37,7 +37,7 @@
         <li class="right" >
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Raspberry GPIO xmlrpc 1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Raspberry GPIO xmlrpc 1.1.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -195,11 +195,13 @@
                         <span class="c1">#we have to update the off counters for this pin</span>
                         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">Updating time ticks for Current pin: </span><span class="si">%i</span><span class="s1"> set to ON in this current polling time...&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">currentPin</span><span class="p">))</span>
                         <span class="n">hostDB</span><span class="o">.</span><span class="n">update_month_pin_counters</span><span class="p">(</span><span class="n">hostip</span><span class="p">,</span><span class="n">managedPinList</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">POLLING_TIME</span><span class="p">)</span>
+                        <span class="c1">#hostDB.update_week_pin_counters(hostip,managedPinList[i],POLLING_TIME)</span>
                 <span class="k">elif</span> <span class="n">prePinStatus</span> <span class="o">==</span> <span class="n">PIN_ON</span> <span class="ow">and</span> <span class="n">currentPinStatus</span> <span class="o">==</span> <span class="n">PIN_ON</span><span class="p">:</span>
                         <span class="c1">#pin still ON from previous polling period</span>
                         <span class="c1">#we have to update the off counters for this pin</span>
                         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">Updating time ticks for Current pin: </span><span class="si">%i</span><span class="s1"> Still ON in this current polling time...&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">currentPin</span><span class="p">))</span>
                         <span class="n">hostDB</span><span class="o">.</span><span class="n">update_month_pin_counters</span><span class="p">(</span><span class="n">hostip</span><span class="p">,</span><span class="n">managedPinList</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">POLLING_TIME</span><span class="p">)</span>
+                        <span class="c1">#hostDB.update_week_pin_counters(hostip,managedPinList[i],POLLING_TIME)</span>
                 <span class="k">else</span><span class="p">:</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">Current pin: </span><span class="si">%i</span><span class="s1"> set to OFF. Skipping time ticks update...&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">currentPin</span><span class="p">))</span>
                         
 
@@ -216,7 +218,7 @@
                 <span class="c1">#implement this method so that system.listMethods</span>
                 <span class="c1">#knows to advertise the string methods</span>
                 <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;serving listMethods funct ...&#39;</span><span class="p">)</span>
-                <span class="k">return</span> <span class="p">[</span><span class="s1">&#39;checkServer&#39;</span><span class="p">,</span><span class="s1">&#39;setGPIO&#39;</span><span class="p">]</span>
+                <span class="k">return</span> <span class="p">[</span><span class="s1">&#39;checkServer&#39;</span><span class="p">,</span><span class="s1">&#39;setGPIO&#39;</span><span class="p">,</span><span class="s1">&#39;getGPIOStatus&#39;</span><span class="p">]</span>
 
 <div class="viewcode-block" id="ServerFuncts.checkServer"><a class="viewcode-back" href="../rpcAPI.html#servergpio.ServerFuncts.checkServer">[docs]</a>        <span class="k">def</span> <span class="nf">checkServer</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
                 <span class="sd">&#39;&#39;&#39; check XMLRPC server service status</span>
@@ -230,6 +232,22 @@
                 <span class="n">logger</span><span class="o">.</span><span class="n">info</span> <span class="p">(</span><span class="s2">&quot;serving checkServer funct...XMLRPC Server from </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span><span class="n">hostip</span><span class="p">)</span>		
                 <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="s2">&quot;XMLRPC Server from </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span><span class="n">hostip</span><span class="p">)</span></div>
 
+<div class="viewcode-block" id="ServerFuncts.getGPIOStatus"><a class="viewcode-back" href="../rpcAPI.html#servergpio.ServerFuncts.getGPIOStatus">[docs]</a>        <span class="k">def</span> <span class="nf">getGPIOStatus</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+                <span class="sd">&#39;&#39;&#39; get current PIN Status</span>
+<span class="sd">                :returns: string</span>
+<span class="sd">                :rtype: json</span>
+
+
+<span class="sd">                &#39;&#39;&#39;</span>
+                <span class="k">global</span> <span class="n">managedPinList</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span> <span class="p">(</span><span class="s2">&quot;serving getGPIOStatus XMLRPC funct...&quot;</span><span class="p">)</span>
+                <span class="c1">#get current status</span>
+                <span class="n">currentPinStatusList</span><span class="o">=</span><span class="n">get_GPIO_status</span><span class="p">(</span><span class="n">managedPinList</span><span class="p">)</span>
+                <span class="c1">#for i in range(0,len(managedPinList)):</span>
+                <span class="c1">#        currentPin=managedPinList[i]</span>
+                <span class="c1">#        prePinStatus=prePinStatusList[i]</span>
+                <span class="c1">#        currentPinStatus=currentPinStatusList[i]</span>
+                <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">currentPinStatusList</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ServerFuncts.setGPIO"><a class="viewcode-back" href="../rpcAPI.html#servergpio.ServerFuncts.setGPIO">[docs]</a>        <span class="k">def</span> <span class="nf">setGPIO</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">gpio</span><span class="p">):</span>
@@ -313,6 +331,12 @@
             <span class="n">ev_id</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">ev</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">])</span>
             <span class="n">ev_pin</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">ev</span><span class="p">[</span><span class="s1">&#39;pin&#39;</span><span class="p">])</span>
             <span class="n">ev_interval</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">ev</span><span class="p">[</span><span class="s1">&#39;interval&#39;</span><span class="p">])</span>
+            <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">ev</span><span class="p">[</span><span class="s1">&#39;enabled&#39;</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">ev_enabled</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="n">ev_enabled_str</span> <span class="o">=</span> <span class="s1">&#39;event Disabled by User&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                    <span class="n">ev_enabled</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="n">ev_enabled_str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
             <span class="n">now</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
             <span class="n">to_be_served</span><span class="o">=</span> <span class="kc">False</span>
             <span class="n">set_pin_on</span> <span class="o">=</span> <span class="kc">False</span>
@@ -333,11 +357,18 @@
                     <span class="n">hostDB</span><span class="o">.</span><span class="n">update_event</span><span class="p">(</span><span class="n">ev_id</span><span class="p">,</span><span class="n">start_time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S&#39;</span><span class="p">),</span><span class="n">stop_time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S&#39;</span><span class="p">),</span><span class="mi">1</span><span class="p">)</span>
                     <span class="c1">#now check if pin has been set in manual mode</span>
                     <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Checking pin </span><span class="si">%i</span><span class="s1"> status...&#39;</span><span class="o">%</span><span class="n">ev_pin</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="ow">not</span> <span class="n">hostDB</span><span class="o">.</span><span class="n">check_pin_mode</span><span class="p">(</span><span class="n">hostip</span><span class="p">,</span><span class="n">ev_pin</span><span class="p">):</span>
-                            <span class="c1">#pin set in auto mode</span>
+                    <span class="k">if</span> <span class="n">hostDB</span><span class="o">.</span><span class="n">check_pin_mode</span><span class="p">(</span><span class="n">hostip</span><span class="p">,</span><span class="n">ev_pin</span><span class="p">):</span>
+                            <span class="n">pin_manual</span> <span class="o">=</span> <span class="kc">True</span>
+                            <span class="n">pin_manualstr</span> <span class="o">=</span> <span class="s1">&#39;Set to Manual mode&#39;</span>
+                    <span class="k">else</span><span class="p">:</span>
+                            <span class="n">pin_manual</span> <span class="o">=</span> <span class="kc">False</span>
+                            <span class="n">pin_manualstr</span> <span class="o">=</span> <span class="s1">&#39;Set to Automatic mode&#39;</span>
+                            
+                    <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">pin_manual</span><span class="p">)</span> <span class="ow">and</span> <span class="n">ev_enabled</span><span class="p">:</span>
+                            <span class="c1">#pin set in auto mode and event enabled by user</span>
                             <span class="c1">#we should set the pin OFF</span>
                             <span class="n">set_pin_off</span> <span class="o">=</span> <span class="kc">True</span>
-                    <span class="k">else</span><span class="p">:</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">ANSI_info</span><span class="p">(</span><span class="s1">&#39;PIN </span><span class="si">%i</span><span class="s1"> set in manual Mode. Skipping PIN management...&#39;</span><span class="o">%</span><span class="n">ev_pin</span><span class="p">))</span>
+                    <span class="k">else</span><span class="p">:</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">ANSI_warning</span><span class="p">(</span><span class="s1">&#39;PIN </span><span class="si">%i</span><span class="s1"> </span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1">. Skipping PIN management...&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">ev_pin</span><span class="p">,</span><span class="n">pin_manualstr</span><span class="p">,</span><span class="n">ev_enabled_str</span><span class="p">)))</span>
 
             <span class="k">if</span> <span class="n">now</span> <span class="o">&gt;=</span> <span class="n">stop_time</span><span class="p">:</span>
                     <span class="c1">#in this case we have to update the event stop time in the DB</span>
@@ -349,11 +380,19 @@
                     <span class="n">hostDB</span><span class="o">.</span><span class="n">update_event</span><span class="p">(</span><span class="n">ev_id</span><span class="p">,</span><span class="n">start_time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S&#39;</span><span class="p">),</span><span class="n">stop_time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S&#39;</span><span class="p">),</span><span class="mi">0</span><span class="p">)</span>
                     <span class="c1">#now check if pin has been set in manual mode</span>
                     <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Checking pin </span><span class="si">%i</span><span class="s1"> status...&#39;</span><span class="o">%</span><span class="n">ev_pin</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="ow">not</span> <span class="n">hostDB</span><span class="o">.</span><span class="n">check_pin_mode</span><span class="p">(</span><span class="n">hostip</span><span class="p">,</span><span class="n">ev_pin</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">hostDB</span><span class="o">.</span><span class="n">check_pin_mode</span><span class="p">(</span><span class="n">hostip</span><span class="p">,</span><span class="n">ev_pin</span><span class="p">):</span>
+                            <span class="n">pin_manual</span> <span class="o">=</span> <span class="kc">True</span>
+                            <span class="n">pin_manualstr</span> <span class="o">=</span> <span class="s1">&#39;Set to Manual mode&#39;</span>
+                    <span class="k">else</span><span class="p">:</span>
+                            <span class="n">pin_manual</span> <span class="o">=</span> <span class="kc">False</span>
+                            <span class="n">pin_manualstr</span> <span class="o">=</span> <span class="s1">&#39;Set to Automatic mode&#39;</span>
+                    
+                    <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">pin_manual</span><span class="p">)</span> <span class="ow">and</span> <span class="n">ev_enabled</span><span class="p">:</span>
                             <span class="c1">#pin set in auto mode</span>
                             <span class="c1">#we should set the pin ON </span>
                             <span class="n">set_pin_on</span> <span class="o">=</span> <span class="kc">True</span>
-                    <span class="k">else</span><span class="p">:</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">ANSI_warning</span><span class="p">(</span><span class="s1">&#39;PIN </span><span class="si">%i</span><span class="s1"> set in manual Mode. Skipping PIN management...&#39;</span><span class="o">%</span><span class="n">ev_pin</span><span class="p">))</span>
+                    <span class="k">else</span><span class="p">:</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">ANSI_warning</span><span class="p">(</span><span class="s1">&#39;PIN </span><span class="si">%i</span><span class="s1"> </span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1">. Skipping PIN management...&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">ev_pin</span><span class="p">,</span><span class="n">pin_manualstr</span><span class="p">,</span><span class="n">ev_enabled_str</span><span class="p">)))</span>
+
 
 
             <span class="k">if</span> <span class="p">(</span><span class="n">set_pin_off</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">set_pin_on</span><span class="p">):</span>
@@ -459,7 +498,7 @@
         <li class="right" >
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">Raspberry GPIO xmlrpc 1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Raspberry GPIO xmlrpc 1.1.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>

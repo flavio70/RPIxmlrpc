@@ -42,6 +42,7 @@ DB Schema Configuration
 
 	T_POWER_SCHEDULE
 	T_POWER_USAGE
+        T_POWER_USAGE_WEEK
 	T_RPI_KEEP_ALIVE
 
 
