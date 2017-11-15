@@ -9,6 +9,7 @@ import os
 import fcntl
 import struct
 import time
+import subprocess
 from datetime import datetime
 from datetime import timedelta
 import logging
@@ -168,7 +169,7 @@ class ServerFuncts:
                 #implement this method so that system.listMethods
                 #knows to advertise the string methods
                 logger.info('serving listMethods funct ...')
-                return ['checkServer','setGPIO','getGPIOStatus']
+                return ['checkServer','setGPIO','getGPIOStatus','getTemperature']
 
         def checkServer(self):
                 ''' check XMLRPC server service status
@@ -181,6 +182,33 @@ class ServerFuncts:
                 global hostip		
                 logger.info ("serving checkServer funct...XMLRPC Server from %s" %hostip)		
                 return json.dumps("XMLRPC Server from %s" %hostip)
+
+        def getTemperature(self):
+                ''' check XMLRPC server RPI Internal temp
+ 
+                :returns: string
+                :rtype: json
+
+
+                '''
+                global hostip		
+                logger.info ("serving getTemperature funct...XMLRPC Server from %s" %hostip)
+                proc = subprocess.Popen(['/opt/vc/bin/vcgencmd measure_temp'],stdout=subprocess.PIPE, shell=True)
+                (out,err) = proc.communicate()
+                if not err:
+
+                        temp=str(out.decode('utf-8')).replace("'C","").replace('temp=','').replace('\n','')
+                        logger.info("serving getTemperature funct... temp: %s 'C"%temp)
+                        return json.dumps(temp)
+                else:
+                        logger.error('serving getTemperature funct error: \n%s'%str(err))
+                        return json.dumps("ERROR")
+
+
+
+
+
+
 
         def getGPIOStatus(self):
                 ''' get current PIN Status
