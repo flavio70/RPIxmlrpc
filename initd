@@ -18,8 +18,8 @@
 PATH=/bin:/usr/bin:/sbin:/usr/sbin
 DESC="xmlrpc GPIO daemon"
 NAME=servergpio
-SCRIPT=/srv/xmlrpc/servergpio.py
-DAEMON='/srv/xmlrpc/servergpio.py &'
+SCRIPT=/srv/RPIxmlrpc/servergpio.py
+DAEMON='/srv/RPIxmlrpc/servergpio.py &'
 PIDFILE=/var/run/servergpio.pid
 SCRIPTNAME=/etc/init.d/"$NAME"
 RUNAS1=root

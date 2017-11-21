@@ -1,0 +1,59 @@
+{
+    "version": 1,
+    "disable_existing_loggers": true,
+    "formatters": {
+        "simple": {
+            "format": "%(asctime)s - [%(name)s:%(lineno)s] - %(levelname)s\t%(message)s",
+            "datefmt": "%d/%b/%y %H:%M:%S"
+        }
+    },
+
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "level": "DEBUG",
+            "formatter": "simple",
+            "stream": "ext://sys.stdout"
+        },
+
+        "debug_file_handler": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "level": "DEBUG",
+            "formatter": "simple",
+            "filename": "ext://RPIxmlrpc.settings._logConst.MAIN_LOG",
+            "maxBytes": 10485760,
+            "backupCount": 4,
+            "encoding": "utf8"
+        },
+
+        "error_file_handler": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "level": "ERROR",
+            "formatter": "simple",
+            "filename": "ext://RPIxmlrpc.settings._logConst.ERROR_LOG",
+            "maxBytes": 10485760,
+            "backupCount": 4,
+            "encoding": "utf8"
+        }
+    },
+
+    "loggers": {
+        "servergpio.py": {
+		    "level": "DEBUG",
+		    "handlers": ["console", "debug_file_handler", "error_file_handler"],
+		    "propagate": "yes"
+        },
+         "DBClass.py": {
+		    "level": "DEBUG",
+		    "handlers": ["debug_file_handler", "error_file_handler"],
+		    "propagate": "yes"
+        },
+        "RPIShell.py": {
+		    "level": "DEBUG",
+		    "handlers": ["debug_file_handler", "error_file_handler"],
+		    "propagate": "yes"
+        }
+        
+    }
+
+}

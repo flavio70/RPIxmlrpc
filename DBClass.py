@@ -7,21 +7,27 @@
 
 """
 import os
+import sys
 import logging
 import logging.config
 import settings
 import mysql.connector
 from datetime import datetime
 from ansicolors import *
+from settings import frmkLog
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(BASE_DIR + '/..')
 
 
 # init logging
 
-logging.config.fileConfig(BASE_DIR + '/logging.conf')
-logger = logging.getLogger('xmlServer')
+#logging.config.fileConfig(BASE_DIR + '/logging.conf')
+#logger = logging.getLogger('xmlServer')
+
+currLog=frmkLog()
+logger = currLog.getLogger(os.path.basename(__file__))
 
 
 
@@ -47,7 +53,15 @@ class rpiDB(object):
                 except Exception as inst:
                         logger.error(ANSI_fail('DBClass._connect\n%s'%str(inst)))
                         return False
-                        
+
+
+	def check(self):
+                try:
+                        return mysql.connector.connect(user=self._username,password=self._password,host=self.host,database=self.name,port=self._port,connection_timeout=5)
+                except Exception as inst:
+                        logger.error(ANSI_fail('DBClass._connect\n%s'%str(inst)))
+                        return False
+                         
 
 
 	def set_pin_status(self,rpi,pin,value,user='RPI',operation='Manual'):

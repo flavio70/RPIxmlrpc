@@ -17,6 +17,7 @@ import logging.config
 import RPi.GPIO as GPIO
 from DBClass import rpiDB
 from ansicolors import *
+from settings import frmkLog
 
 #polling time (sec.) used for event polling
 
@@ -25,6 +26,7 @@ PIN_ON=GPIO.HIGH
 PIN_OFF=GPIO.LOW
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(BASE_DIR + '/..')
 
 # init DB instance for current host
 
@@ -33,8 +35,11 @@ DBConnFlag=True
 
 # init logging
 
-logging.config.fileConfig(BASE_DIR + '/logging.conf')
-logger = logging.getLogger('xmlServer')
+currLog=frmkLog()
+logger = currLog.getLogger(os.path.basename(__file__))
+
+#logging.config.fileConfig(BASE_DIR + '/logging.conf')
+#logger = logging.getLogger('xmlServer')
 
 
 hostip=''

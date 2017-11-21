@@ -41,7 +41,7 @@ if __name__ == '__main__':
                                 logger.error(str(s))
                         else:
                                 logger.info('SSH Session established')
-                                s.sendline('sudo cp /srv/xmlrpc/initd /etc/init.d/servergpio')
+                                s.sendline('sudo cp /srv/RPIxmlrpc/initd /etc/init.d/servergpio')
                                 while not s.prompt():time.sleep(1)
                                 s.sendline('sudo systemctl daemon-reload')
                                 while not s.prompt():time.sleep(1)
