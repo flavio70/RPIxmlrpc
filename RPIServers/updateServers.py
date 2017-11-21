@@ -41,7 +41,7 @@ if __name__ == '__main__':
                                 logger.error(str(s))
                         else:
                                 logger.info('SSH Session established')
-                                s.sendline('cd /srv/xmlrpc')
+                                s.sendline('cd /srv/RPIxmlrpc')
                                 while not s.prompt():time.sleep(1)
                                 s.sendline('sudo chown -R %s docs'%userID)
                                 while not s.prompt():time.sleep(1)
