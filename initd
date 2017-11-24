@@ -23,7 +23,7 @@ DAEMON='/srv/RPIxmlrpc/servergpio.py &'
 PIDFILE=/var/run/servergpio.pid
 SCRIPTNAME=/etc/init.d/"$NAME"
 RUNAS1=root
-VERSION=/srv/xmlrpc/version.py
+VERSION=/srv/RPIxmlrpc/version.py
 
 test -f $SCRIPT || exit 0
 
