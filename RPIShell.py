@@ -13,6 +13,7 @@ import RPi.GPIO as GPIO
 
 PIN_ON=GPIO.HIGH
 PIN_OFF=GPIO.LOW
+pinList = [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]
 
 hostip=''
 
@@ -136,6 +137,28 @@ class RPIShell(cmd.Cmd):
         except Exception as excp:
             print ('%s'%str(excp))
             logger.error('%s'%str(excp))
+
+
+    def do_setAllIOpin(self, arg):
+        'set ALL GPIO pins to ON/OFF status'
+        global hostip
+        try:
+            
+            if not re.match('ON|OFF',parse(arg)[0]):
+                    print('Bad input status format (Must be ON|OFF)')
+                    return
+            print('Setting All pins to %s ...'%(parse(arg)[0]))
+            if parse(arg)[0] == 'ON':
+                    status = PIN_ON
+            else:
+                    status = PIN_OFF
+            for pin in pinList:  
+                GPIO.output(int(pin), status)
+                print('Current status for pin %s : %i'%(str(pin),GPIO.input(int(pin))))
+        except Exception as excp:
+            print ('%s'%str(excp))
+            logger.error('%s'%str(excp))
+
 
   
 
