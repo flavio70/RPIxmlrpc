@@ -316,10 +316,12 @@ if __name__ == '__main__':
             ev_interval=int(ev['interval'])
             if int(ev['enabled']) == 0:
                     ev_enabled = False
+                    ev_busy = 0
                     ev_enabled_str = 'event Disabled by User'
             else:
                     ev_enabled = True
                     ev_enabled_str = ''
+                    ev_busy = 1
             now=datetime.now()
             to_be_served= False
             set_pin_on = False
@@ -337,7 +339,7 @@ if __name__ == '__main__':
                     logger.info('current Time %s >= event startTime %s'%(now,start_time))
                     logger.info('Updating DB event StartTime...')
                     start_time=start_time+timedelta(minutes=ev_interval)
-                    hostDB.update_event(ev_id,start_time.strftime('%Y-%m-%d %H:%M:%S'),stop_time.strftime('%Y-%m-%d %H:%M:%S'),1)
+                    hostDB.update_event(ev_id,start_time.strftime('%Y-%m-%d %H:%M:%S'),stop_time.strftime('%Y-%m-%d %H:%M:%S'),ev_busy)
                     #now check if pin has been set in manual mode
                     logger.info('Checking pin %i status...'%ev_pin)
                     if hostDB.check_pin_mode(hostip,ev_pin):
