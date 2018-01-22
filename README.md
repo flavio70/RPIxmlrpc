@@ -64,3 +64,28 @@ Configuration
 - Start the service
 
 	>sudo service servergpio start
+	
+
+Usage
+--------------------------
+
+The server runs on RPI Power Management chassis and works together with KATE/PowerManagement application (WEB UI)
+and an instance of MYSQL DB with (KATE DB).
+Is able to perform two kinds of services
+
+- Manual services
+
+    The user asks to switch ON/OFF racks declared as manual into DB (using WEB UI)
+    The server acts istantly the request over the correspondig GPIO pin and updates the DB
+
+- Automatic services
+
+    Every polling time (default is 60 secs) the Server ask the pin status and programmed scheduler to DB.
+    The server acts the conseguent actions, switching ON/OFF the correspondig GPIO pin and updates the DB
+
+For both services, scheduler events and pin status can be set into DB using the WEB UI
+Log trace of every operation will be saved into rotational log file:
+
+    /var/log/GPIO/xmlserver.log
+
+    
