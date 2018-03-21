@@ -5,7 +5,9 @@
 	<title></title>
 	<meta name="generator" content="LibreOffice 4.3.3.2 (Linux)"/>
 	<meta name="created" content="00:00:00"/>
-	<meta name="changed" content="2017-10-20T08:57:45.454941915"/>
+	<meta name="changed" content="2018-03-21T16:14:27.221452850"/>
+	<meta name="created" content="00:00:00">
+	<meta name="changed" content="2017-10-20T08:57:45.454941915">
 	<meta name="created" content="00:00:00">
 	<meta name="changed" content="2017-10-18T16:41:40.821624950">
 	<meta name="created" content="00:00:00">
@@ -66,9 +68,6 @@ eth0 inet static</font></p>
 151.98.130.1</font></p>
 <p style="margin-left: 1.25cm; font-weight: normal"><font face="DejaVu Sans Condensed, sans-serif">dns-nameservers
 135.239.25.53 135.120.0.18</font></p>
-<ul>
-	<p style="font-weight: normal"></p>
-</ul>
 <p style="margin-left: 1.25cm; font-weight: normal"><font face="DejaVu Sans Condensed, sans-serif">restart
 network service</font></p>
 <p style="margin-left: 1.25cm"><font face="DejaVu Sans Condensed, sans-serif"><i><b>$
@@ -248,7 +247,7 @@ https_proxy=&quot;https://135.245.192.7:8000&quot;</font></p>
 <font face="DejaVu Sans Condensed, sans-serif">export
 ftp_proxy=&quot;http://135.245.192.7:8000&quot;</font></p>
 <p><font face="DejaVu Sans Condensed, sans-serif"><i><b>$ sudo nano
-/etc/apt/apt.conf.d</b></i></font></p>
+/etc/apt/apt.conf.d/10proxy</b></i></font></p>
 <p style="font-variant: normal; font-style: normal; font-weight: normal">
 <font face="DejaVu Sans Condensed, sans-serif">- add lines:</font></p>
 <p style="margin-left: 1.25cm; font-variant: normal; font-style: normal; font-weight: normal">
@@ -256,6 +255,12 @@ ftp_proxy=&quot;http://135.245.192.7:8000&quot;</font></p>
 &quot;http://135.245.192.7:8000&quot;;</font></p>
 <p style="margin-left: 1.25cm; font-variant: normal; font-style: normal; font-weight: normal">
 <font face="DejaVu Sans Condensed, sans-serif">Acquire::https::Proxy
-&quot;https://135.245.192.7:8000&quot;;</font></p>
+&quot;<a href="https://135.245.192.7:8000/">https://135.245.192.7:8000</a>&quot;;</font></p>
+<p><font face="DejaVu Sans Condensed, sans-serif"><i><b>$ sudo visudo</b></i></font></p>
+<p style="font-variant: normal; font-style: normal; font-weight: normal">
+<font face="DejaVu Sans Condensed, sans-serif">- add line:</font></p>
+<p style="margin-left: 1.25cm; font-variant: normal; font-style: normal; font-weight: normal">
+<font face="DejaVu Sans Condensed, sans-serif">Defaults env_keep =
+&quot;http_proxy https_proxy ftp_proxy&quot;</font></p>
 </body>
 </html>
